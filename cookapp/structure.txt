@@ -1,0 +1,26 @@
+COOKAPP/
+├── assets/
+│   ├── g-logo.png
+├── src/
+│   ├── screens/
+│   │   ├── auth/
+│   │   │   ├── LoginScreen.js
+│   │   │   └── CompleteProfileScreen.js
+│   │   ├── main/
+│   │   │   ├── AdminScreen.js
+│   │   │   ├── FavoritesScreen.js
+│   │   │   ├── HomeScreen.js
+|   |   |   ├── OrdersScreen.js
+│   │   │   └── ProfileScreen.js
+│   │   └── MainTabNavigator.js
+│   ├── components/
+│   │   ├── CustomTabBar.js
+│   │   └── ThemeToggle.js
+│   ├── services/
+│   │   └── authService.js
+│   ├── context/
+│   │   ├── AuthContext.js
+│   │   └── ThemeContext.js
+│   └── styles/
+│       └── colors.js
+└── App.js
