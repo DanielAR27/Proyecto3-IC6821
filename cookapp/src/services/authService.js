@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://cocina-express-api.onrender.com/api';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 // Verificar si usuario existe por Google ID
 export const checkUserExists = async (googleId) => {

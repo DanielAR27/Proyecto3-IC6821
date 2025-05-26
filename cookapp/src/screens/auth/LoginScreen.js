@@ -14,7 +14,7 @@ const LoginScreen = ({ onLogin, onNeedsProfile }) => {
 
   // Configuración Google Auth simplificada
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: '8348128087-pbq20qn3k627ed5dackc0e0ss4foeuk1.apps.googleusercontent.com',
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     scopes: ['profile', 'email'],
   });
 
