@@ -11,6 +11,7 @@ import {
   Platform 
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { lightTheme, darkTheme } from '../../styles/colors';
 import { createUser } from '../../services/authService';
 
 const CompleteProfileScreen = ({ googleUserData, onComplete, isDarkMode = false }) => {

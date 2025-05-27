@@ -62,3 +62,27 @@ export const getGoogleUserInfo = async (accessToken) => {
     throw error;
   }
 };
+
+// Obtener todos los owners (solo admin)
+export const getOwners = async (userId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/owners`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error getting owners');
+    }
+    
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Error getting owners:', error);
+    throw error;
+  }
+};

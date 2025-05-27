@@ -1,13 +1,34 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from './main/HomeScreen';
-import OrdersScreen from './main/OrdersScreen';
-import FavoritesScreen from './main/FavoritesScreen';
-import AdminScreen from './main/AdminScreen';
-import ProfileScreen from './main/ProfileScreen';
+import { createStackNavigator } from '@react-navigation/stack';
+import HomeScreen from './home/HomeScreen';
+import OrdersScreen from './orders/OrdersScreen';
+import FavoritesScreen from './favorites/FavoritesScreen';
+import AdminScreen from './admin/AdminScreen';
+import AddRestaurantScreen from './admin/AddRestaurantScreen';
+import ProfileScreen from './profile/ProfileScreen';
 import CustomTabBar from '../components/CustomTabBar';
 
 const Tab = createBottomTabNavigator();
+const AdminStack = createStackNavigator();
+
+// Stack Navigator para Admin
+const AdminStackNavigator = ({ user }) => {
+  return (
+    <AdminStack.Navigator
+      screenOptions={{
+        headerShown: false, // Sin header por defecto
+      }}
+    >
+      <AdminStack.Screen name="AdminMain">
+        {(props) => <AdminScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddRestaurant">
+        {(props) => <AddRestaurantScreen {...props} route={{...props.route, params: {user}}} />}
+      </AdminStack.Screen>
+    </AdminStack.Navigator>
+  );
+};
 
 const MainTabNavigator = ({ user, onLogout }) => {
   return (
@@ -29,7 +50,7 @@ const MainTabNavigator = ({ user, onLogout }) => {
       {/* Tab de Admin solo para owners y admins */}
       {(user?.role === 'owner' || user?.role === 'admin') && (
         <Tab.Screen name="Admin">
-          {() => <AdminScreen user={user} />}
+          {() => <AdminStackNavigator user={user} />}
         </Tab.Screen>
       )}
       

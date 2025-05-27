@@ -2,17 +2,36 @@ COOKAPP/
 ├── assets/
 │   ├── g-logo.png
 ├── src/
-│   ├── screens/
-│   │   ├── auth/
-│   │   │   ├── LoginScreen.js
-│   │   │   └── CompleteProfileScreen.js
-│   │   ├── main/
-│   │   │   ├── AdminScreen.js
-│   │   │   ├── FavoritesScreen.js
-│   │   │   ├── HomeScreen.js
-|   |   |   ├── OrdersScreen.js
-│   │   │   └── ProfileScreen.js
-│   │   └── MainTabNavigator.js
+|    screens/
+|   |    ├── auth/
+|   |    │   ├── LoginScreen.js
+|   |    │   └── CompleteProfileScreen.js
+|   |    ├── shared/
+|   |    │   ├── RestaurantScreen.js       # Menú del restaurante + su carrito
+|   |    │   ├── ProductScreen.js          # Producto individual + toppings
+|   |    │   ├── CartScreen.js            # Vista del carrito del restaurante
+|   |    │   ├── CheckoutScreen.js        # Proceso de pago
+|   |    │   └── OrderTrackingScreen.js   # Seguimiento de orden en tiempo real
+|   |    ├── home/
+|   |    │   └── HomeScreen.js            # Lista/búsqueda de restaurantes
+|   |    ├── orders/
+|   |    │   ├── OrdersScreen.js          # Órdenes activas/en progreso
+|   |    │   └── OrderHistoryScreen.js    # Historial completo de órdenes
+|   |    ├── favorites/
+|   |    │   └── FavoritesScreen.js       # Restaurantes y platos favoritos
+|   |    ├── admin/
+|   |    │   ├── AdminScreen.js           # Panel principal de admin
+|   |    │   ├── AddRestaurantScreen.js   # Agregar nuevo restaurante
+|   |    │   ├── ManageRestaurantsScreen.js # Gestionar restaurantes existentes
+|   |    │   ├── ManageMenuScreen.js      # Editar menú de restaurante
+|   |    │   └── OrderManagementScreen.js # Gestión de órdenes (para dueños)
+|   |    ├── profile/
+|   |    │   ├── ProfileScreen.js         # Perfil principal
+|   |    │   ├── EditProfileScreen.js     # Editar datos personales
+|   |    │   ├── AddressManagementScreen.js # Gestionar direcciones
+|   |    │   ├── PaymentMethodsScreen.js  # Métodos de pago
+|   |    │   └── SettingsScreen.js        # Configuraciones de la app
+|   |    └── MainTabNavigator.js
 │   ├── components/
 │   │   ├── CustomTabBar.js
 │   │   └── ThemeToggle.js

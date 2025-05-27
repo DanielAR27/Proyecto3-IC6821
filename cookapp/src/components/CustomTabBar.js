@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CustomTabBar = ({ state, descriptors, navigation, user }) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const getTabIcon = (routeName, focused) => {
     let iconName;
@@ -62,7 +64,7 @@ const CustomTabBar = ({ state, descriptors, navigation, user }) => {
 
   const visibleTabs = getVisibleTabs();
 
-  const styles = createStyles(theme);
+  const styles = createStyles(theme, insets);
 
   return (
     <View style={styles.tabContainer}>
@@ -110,13 +112,13 @@ const CustomTabBar = ({ state, descriptors, navigation, user }) => {
   );
 };
 
-const createStyles = (theme) => StyleSheet.create({
+const createStyles = (theme, insets) => StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: theme.tabBarBackground,
     borderTopWidth: 1,
     borderTopColor: theme.tabBarBorder,
-    paddingBottom: 20,
+    paddingBottom: Platform.OS === 'android' ? 10 : (insets.bottom || 20), // Más espacio en Android
     paddingTop: 10,
   },
   tabButton: {
