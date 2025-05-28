@@ -12,15 +12,16 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../context/ThemeContext';
-import { createRestaurant } from '../../services/restaurantService';
-import { getOwners } from '../../services/authService';
+import { useTheme } from '../../../context/ThemeContext';
+import { createRestaurant } from '../../../services/restaurantService';
+import { getOwners } from '../../../services/authService';
 
 // Importar componentes
 import OwnerSelectionModal from './components/OwnerSelectionModal';
 import BannerUpload from './components/BannerUpload';
 import RestaurantForm from './components/RestaurantForm';
 import ScheduleForm from './components/ScheduleForm';
+import RestaurantTagSelector from './components/RestaurantTagSelector';
 
 const AddRestaurantScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -32,6 +33,7 @@ const AddRestaurantScreen = ({ navigation, route }) => {
   const [selectedOwner, setSelectedOwner] = useState(null);
   const [showOwnerModal, setShowOwnerModal] = useState(false);
   const [bannerImage, setBannerImage] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
 
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -104,6 +106,10 @@ const AddRestaurantScreen = ({ navigation, route }) => {
     setBannerImage(imageUri);
   };
 
+  const handleTagsChange = (tags) => {
+    setSelectedTags(tags);
+  };
+
   const validateForm = () => {
     const { name, description, phone, email, street, city, province } = formData;
     
@@ -170,7 +176,9 @@ const AddRestaurantScreen = ({ navigation, route }) => {
           city: formData.city.trim(),
           province: formData.province.trim(),
         },
-        business_hours
+        business_hours,
+        // Agregar restaurant_tags si hay seleccionados
+        ...(selectedTags.length > 0 && { restaurant_tags: selectedTags.map(tag => tag._id) })
       };
       
       await createRestaurant(restaurantData, user?._id);
@@ -258,6 +266,14 @@ const AddRestaurantScreen = ({ navigation, route }) => {
             formData={formData}
             onScheduleChange={handleScheduleChange}
             onToggleDay={handleToggleDay}
+          />
+
+          {/* Componente: Tag Selector */}
+          <RestaurantTagSelector 
+            selectedTags={selectedTags}
+            onTagsChange={handleTagsChange}
+            maxTags={5}
+            disabled={loading}
           />
 
           {/* Botón Submit */}

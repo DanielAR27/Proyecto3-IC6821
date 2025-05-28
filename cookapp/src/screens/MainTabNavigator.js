@@ -5,7 +5,11 @@ import HomeScreen from './home/HomeScreen';
 import OrdersScreen from './orders/OrdersScreen';
 import FavoritesScreen from './favorites/FavoritesScreen';
 import AdminScreen from './admin/AdminScreen';
-import AddRestaurantScreen from './admin/AddRestaurantScreen';
+import AddRestaurantScreen from './admin/restaurants/AddRestaurantScreen';
+import ManageRestaurantsScreen from './admin/restaurants/ManageRestaurantsScreen';
+import UpdateRestaurantScreen from './admin/restaurants/UpdateRestaurantScreen';
+import ManageRestaurantTagsScreen from './admin/restaurant-tags/ManageRestaurantTagsScreen';
+import AddRestaurantTagScreen from './admin/restaurant-tags/AddRestaurantTagScreen';
 import ProfileScreen from './profile/ProfileScreen';
 import CustomTabBar from '../components/CustomTabBar';
 
@@ -25,6 +29,18 @@ const AdminStackNavigator = ({ user }) => {
       </AdminStack.Screen>
       <AdminStack.Screen name="AddRestaurant">
         {(props) => <AddRestaurantScreen {...props} route={{...props.route, params: {user}}} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageRestaurants">
+        {(props) => <ManageRestaurantsScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="UpdateRestaurant">
+        {(props) => <UpdateRestaurantScreen {...props} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageRestaurantTags">
+        {(props) => <ManageRestaurantTagsScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddRestaurantTag">
+        {(props) => <AddRestaurantTagScreen {...props} />}
       </AdminStack.Screen>
     </AdminStack.Navigator>
   );

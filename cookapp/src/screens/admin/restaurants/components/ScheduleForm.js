@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity
 } from 'react-native';
-import { useTheme } from '../../../context/ThemeContext';
+import { useTheme } from '../../../../context/ThemeContext';
 
 const ScheduleForm = ({ formData, onScheduleChange, onToggleDay }) => {
   const { theme } = useTheme();

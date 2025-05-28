@@ -7,38 +7,45 @@ COOKAPP/
 |   |    │   ├── LoginScreen.js
 |   |    │   └── CompleteProfileScreen.js
 |   |    ├── shared/
-|   |    │   ├── RestaurantScreen.js       # Menú del restaurante + su carrito
-|   |    │   ├── ProductScreen.js          # Producto individual + toppings
-|   |    │   ├── CartScreen.js            # Vista del carrito del restaurante
-|   |    │   ├── CheckoutScreen.js        # Proceso de pago
-|   |    │   └── OrderTrackingScreen.js   # Seguimiento de orden en tiempo real
+|   |    │   ├── RestaurantScreen.js       # Menú del restaurante + su carrito (2) -> (3) -- Amanda *
+|   |    │   ├── ProductScreen.js          # Producto individual + toppings    (3) -> (2) -- Luis *
+|   |    │   ├── CartScreen.js            # Vista del carrito del restaurante  (4) -> (5) -- Christian
+|   |    │   └─ CheckoutScreen.js        # Proceso de pago                    (5) -> (1)  -- Daniel
 |   |    ├── home/
-|   |    │   └── HomeScreen.js            # Lista/búsqueda de restaurantes
+|   |    │   └── HomeScreen.js            # Lista/búsqueda de restaurantes (1) -> (2) -- Luis *
 |   |    ├── orders/
-|   |    │   ├── OrdersScreen.js          # Órdenes activas/en progreso
-|   |    │   └── OrderHistoryScreen.js    # Historial completo de órdenes
+|   |    │   ├── OrdersScreen.js          # Órdenes activas/en progreso (7) -> (6)
+|   |    │   └── OrderHistoryScreen.js    # Historial completo de órdenes (6) -> (7)
 |   |    ├── favorites/
-|   |    │   └── FavoritesScreen.js       # Restaurantes y platos favoritos
-|   |    ├── admin/
-|   |    │   ├── AdminScreen.js           # Panel principal de admin
-|   |    │   ├── AddRestaurantScreen.js   # Agregar nuevo restaurante
-|   |    │   ├── ManageRestaurantsScreen.js # Gestionar restaurantes existentes
-|   |    │   ├── ManageMenuScreen.js      # Editar menú de restaurante
-|   |    │   └── OrderManagementScreen.js # Gestión de órdenes (para dueños)
-|   |    ├── profile/
+|   |    │   └── FavoritesScreen.js       # Restaurantes y platos favoritos (8) -> (2)
+|   |    ├── admin/ -- Daniel
+|   |    |   ├── restaurants
+|   |    |   |    ├── components
+|   |    |   |    |     ├── BannerUpload.js  # Componente para el Banner
+|   |    |   |    |     ├── OwnerSelectionModal.js # Seleccionar un owner
+|   |    |   |    |     ├── RestaurantForm.js # Formulario de restaurante
+|   |    |   |    |     └── ScheduleForm.js # Formulario de horario
+|   |    |   |    ├── AddRestaurantScreen.js # Agregar nuevo restaurante
+|   |    |   |    ├── ManageRestaurantsScreen.js # Gestionar restaurantes existentes
+|   |    |   |    └── UpdateRestaurantScreen.js # Actualizar un restaurante
+|   |    |   ├── restaurants-tags
+|   |    |   |    ├── AddRestaurantTagScreen.js # Agregar un nuev tag de restaurante
+|   |    |   |    └── ManageRestaurantTagsScreen.js # Gestionar tags de restaurantes existentes
+|   |    │   └── AdminScreen.js           # Panel principal de admin
+|   |    ├── profile/ -- Cristhian
 |   |    │   ├── ProfileScreen.js         # Perfil principal
 |   |    │   ├── EditProfileScreen.js     # Editar datos personales
 |   |    │   ├── AddressManagementScreen.js # Gestionar direcciones
 |   |    │   ├── PaymentMethodsScreen.js  # Métodos de pago
 |   |    │   └── SettingsScreen.js        # Configuraciones de la app
-|   |    └── MainTabNavigator.js
+|   |    └── MainTabNavigator.js (lo van a ocupar editar un montón, cuidado)
 │   ├── components/
-│   │   ├── CustomTabBar.js
+│   │   ├── CustomTabBar.js 
 │   │   └── ThemeToggle.js
 │   ├── services/
+|   |   ├── * Agregar más servicios
 │   │   └── authService.js
 │   ├── context/
-│   │   ├── AuthContext.js
 │   │   └── ThemeContext.js
 │   └── styles/
 │       └── colors.js

@@ -10,6 +10,14 @@ const AdminScreen = ({ user, navigation }) => {
     navigation.navigate('AddRestaurant');
   };
 
+  const handleManageRestaurants = () => {
+    navigation.navigate('ManageRestaurants');
+  };
+
+  const handleManageRestaurantTags = () => {
+    navigation.navigate('ManageRestaurantTags');
+  };
+
   const styles = createStyles(theme);
 
   return (
@@ -27,7 +35,7 @@ const AdminScreen = ({ user, navigation }) => {
           />
           <Text style={styles.title}>Panel de Administración</Text>
           <Text style={styles.roleText}>
-            Rol actual: {user?.role}
+            Rol actual: {user?.role === 'admin' ? 'Administrador' : 'Propietario'}
           </Text>
         </View>
 
@@ -37,11 +45,30 @@ const AdminScreen = ({ user, navigation }) => {
             <TouchableOpacity style={styles.optionItem} onPress={handleAddRestaurant}>
               <View style={styles.optionLeft}>
                 <Ionicons 
-                  name="restaurant-outline" 
+                  name="add-circle-outline" 
                   size={24} 
                   color={theme.text} 
                 />
-                <Text style={styles.optionText}>Agregar un Restaurante</Text>
+                <Text style={styles.optionText}>Agregar Restaurante</Text>
+              </View>
+              <Ionicons 
+                name="chevron-forward" 
+                size={20} 
+                color={theme.textSecondary} 
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Gestionar Tags - SOLO ADMINS */}
+          {user?.role === 'admin' && (
+            <TouchableOpacity style={styles.optionItem} onPress={handleManageRestaurantTags}>
+              <View style={styles.optionLeft}>
+                <Ionicons 
+                  name="pricetag-outline" 
+                  size={24} 
+                  color={theme.text} 
+                />
+                <Text style={styles.optionText}>Gestionar Tags de Restaurantes</Text>
               </View>
               <Ionicons 
                 name="chevron-forward" 
@@ -52,18 +79,22 @@ const AdminScreen = ({ user, navigation }) => {
           )}
 
           {/* Gestionar Restaurantes - OWNERS y ADMINS */}
-          <TouchableOpacity style={styles.optionItem} disabled>
+          <TouchableOpacity style={styles.optionItem} onPress={handleManageRestaurants}>
             <View style={styles.optionLeft}>
               <Ionicons 
-                name="list-outline" 
+                name="restaurant-outline" 
                 size={24} 
-                color={theme.textSecondary} 
+                color={theme.text} 
               />
-              <Text style={[styles.optionText, { color: theme.textSecondary }]}>
+              <Text style={styles.optionText}>
                 {user?.role === 'admin' ? 'Gestionar Todos los Restaurantes' : 'Gestionar Mis Restaurantes'}
               </Text>
             </View>
-            <Text style={styles.comingSoon}>Próximamente</Text>
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={theme.textSecondary} 
+            />
           </TouchableOpacity>
 
           {/* Reportes - SOLO ADMINS */}
@@ -99,6 +130,31 @@ const AdminScreen = ({ user, navigation }) => {
               <Text style={styles.comingSoon}>Próximamente</Text>
             </TouchableOpacity>
           )}
+
+          {/* Gestión de Productos - Para futuras versiones */}
+          <TouchableOpacity style={styles.optionItem} disabled>
+            <View style={styles.optionLeft}>
+              <Ionicons 
+                name="fast-food-outline" 
+                size={24} 
+                color={theme.textSecondary} 
+              />
+              <Text style={[styles.optionText, { color: theme.textSecondary }]}>
+                {user?.role === 'admin' ? 'Gestionar Productos' : 'Gestionar Mis Productos'}
+              </Text>
+            </View>
+            <Text style={styles.comingSoon}>Próximamente</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Información adicional */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoText}>
+            {user?.role === 'admin' 
+              ? 'Como administrador, puedes gestionar todos los aspectos del sistema.'
+              : 'Como propietario, puedes gestionar la información de tus restaurantes.'
+            }
+          </Text>
         </View>
       </View>
     </View>
@@ -162,6 +218,7 @@ const createStyles = (theme) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: 20,
   },
   optionItem: {
     flexDirection: 'row',
@@ -186,6 +243,22 @@ const createStyles = (theme) => StyleSheet.create({
     fontSize: 12,
     color: theme.textSecondary,
     fontStyle: 'italic',
+  },
+  infoSection: {
+    backgroundColor: theme.cardBackground,
+    padding: 20,
+    borderRadius: 15,
+    shadowColor: theme.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  infoText: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

@@ -63,15 +63,14 @@ export const getGoogleUserInfo = async (accessToken) => {
   }
 };
 
-// Obtener todos los owners (solo admin)
+// Obtener todos los owners (solo admin) - AHORA GET con query params
 export const getOwners = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/owners`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/users/owners?user_id=${userId}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_id: userId }),
+      }
     });
     
     if (!response.ok) {
