@@ -37,12 +37,12 @@ export const getRestaurantById = async (id) => {
 // Obtener restaurantes por owner
 export const getRestaurantsByOwner = async (ownerId, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurants/owner/${ownerId}`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/restaurants/owner/${ownerId}?user_id=${userId}`, {
+      method: 'GET',  // ← Cambiar a GET
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_id: userId }),
+      }
+      // Quitar el body
     });
     
     if (!response.ok) {
@@ -111,15 +111,15 @@ export const updateRestaurant = async (id, restaurantData, userId) => {
   }
 };
 
-// Desactivar restaurante
+// Eliminar restaurante
 export const deleteRestaurant = async (id, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurants/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/restaurants/${id}?user_id=${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ user_id: userId }),
+      }
+      // Quitar el body
     });
     
     if (!response.ok) {

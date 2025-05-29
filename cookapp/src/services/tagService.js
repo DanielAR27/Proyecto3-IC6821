@@ -1,9 +1,9 @@
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-// Obtener todos los tags activos (público)
-export const getAllRestaurantTags = async () => {
+// Obtener tags de un restaurante (público)
+export const getTagsByRestaurant = async (restaurantId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags`);
+    const response = await fetch(`${API_BASE_URL}/tags/restaurant/${restaurantId}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -12,15 +12,15 @@ export const getAllRestaurantTags = async () => {
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error getting restaurant tags:', error);
+    console.error('Error getting tags by restaurant:', error);
     throw error;
   }
 };
 
 // Obtener tag por ID
-export const getRestaurantTagById = async (id) => {
+export const getTagById = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags/${id}`);
+    const response = await fetch(`${API_BASE_URL}/tags/${id}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -29,15 +29,15 @@ export const getRestaurantTagById = async (id) => {
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error getting restaurant tag:', error);
+    console.error('Error getting tag:', error);
     throw error;
   }
 };
 
-// Obtener todos los tags incluyendo inactivos (solo admin)
-export const getAllRestaurantTagsAdmin = async (userId) => {
+// Obtener todos los tags (filtrados por rol del usuario)
+export const getAllTags = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags/all?user_id=${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/tags?user_id=${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -46,21 +46,21 @@ export const getAllRestaurantTagsAdmin = async (userId) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error getting restaurant tags');
+      throw new Error(errorData.message || 'Error getting tags');
     }
     
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error getting restaurant tags admin:', error);
+    console.error('Error getting all tags:', error);
     throw error;
   }
 };
 
-// Crear nuevo tag (solo admin)
-export const createRestaurantTag = async (tagData, userId) => {
+// Crear nuevo tag
+export const createTag = async (tagData, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags`, {
+    const response = await fetch(`${API_BASE_URL}/tags`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -73,21 +73,21 @@ export const createRestaurantTag = async (tagData, userId) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error creating restaurant tag');
+      throw new Error(errorData.message || 'Error creating tag');
     }
     
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error creating restaurant tag:', error);
+    console.error('Error creating tag:', error);
     throw error;
   }
 };
 
-// Actualizar tag (solo admin)
-export const updateRestaurantTag = async (id, tagData, userId) => {
+// Actualizar tag
+export const updateTag = async (id, tagData, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/tags/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -100,21 +100,21 @@ export const updateRestaurantTag = async (id, tagData, userId) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error updating restaurant tag');
+      throw new Error(errorData.message || 'Error updating tag');
     }
     
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error updating restaurant tag:', error);
+    console.error('Error updating tag:', error);
     throw error;
   }
 };
 
-// Eliminar tag (solo admin)
-export const deleteRestaurantTag = async (id, userId) => {
+// Desactivar tag
+export const deleteTag = async (id, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurant-tags/${id}?user_id=${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/tags/${id}?user_id=${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -123,13 +123,13 @@ export const deleteRestaurantTag = async (id, userId) => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Error deleting restaurant tag');
+      throw new Error(errorData.message || 'Error deleting tag');
     }
     
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error deleting restaurant tag:', error);
+    console.error('Error deleting tag:', error);
     throw error;
   }
 };

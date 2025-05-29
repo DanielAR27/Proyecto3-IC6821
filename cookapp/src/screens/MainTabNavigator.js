@@ -10,6 +10,10 @@ import ManageRestaurantsScreen from './admin/restaurants/ManageRestaurantsScreen
 import UpdateRestaurantScreen from './admin/restaurants/UpdateRestaurantScreen';
 import ManageRestaurantTagsScreen from './admin/restaurant-tags/ManageRestaurantTagsScreen';
 import AddRestaurantTagScreen from './admin/restaurant-tags/AddRestaurantTagScreen';
+import ManageCategoriesScreen from './admin/categories/ManageCategoriesScreen';
+import AddCategoryScreen from './admin/categories/AddCategoryScreen';
+import ManageTagsScreen from './admin/tags/ManageTagsScreen';
+import AddTagScreen from './admin/tags/AddTagScreen';
 import ProfileScreen from './profile/ProfileScreen';
 import CustomTabBar from '../components/CustomTabBar';
 
@@ -41,6 +45,18 @@ const AdminStackNavigator = ({ user }) => {
       </AdminStack.Screen>
       <AdminStack.Screen name="AddRestaurantTag">
         {(props) => <AddRestaurantTagScreen {...props} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageCategories">
+        {(props) => <ManageCategoriesScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddCategory">
+        {(props) => <AddCategoryScreen {...props} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageTags">
+        {(props) => <ManageTagsScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddTag">
+        {(props) => <AddTagScreen {...props} />}
       </AdminStack.Screen>
     </AdminStack.Navigator>
   );

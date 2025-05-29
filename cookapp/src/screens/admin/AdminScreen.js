@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -18,6 +18,14 @@ const AdminScreen = ({ user, navigation }) => {
     navigation.navigate('ManageRestaurantTags');
   };
 
+  const handleManageCategories = () => {
+    navigation.navigate('ManageCategories');
+  };
+
+  const handleManageTags = () => {
+  navigation.navigate('ManageTags');
+  };
+
   const styles = createStyles(theme);
 
   return (
@@ -26,6 +34,10 @@ const AdminScreen = ({ user, navigation }) => {
         <Text style={styles.headerTitle}>Administración</Text>
       </View>
 
+    <ScrollView 
+      style={styles.scrollContainer}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.contentContainer}>
         <View style={styles.welcomeSection}>
           <Ionicons 
@@ -68,7 +80,7 @@ const AdminScreen = ({ user, navigation }) => {
                   size={24} 
                   color={theme.text} 
                 />
-                <Text style={styles.optionText}>Gestionar Tags de Restaurantes</Text>
+                <Text style={styles.optionText}>Gestionar Tags Globales</Text>
               </View>
               <Ionicons 
                 name="chevron-forward" 
@@ -77,6 +89,44 @@ const AdminScreen = ({ user, navigation }) => {
               />
             </TouchableOpacity>
           )}
+
+          {/* Gestionar Categorías - OWNERS y ADMINS */}
+          <TouchableOpacity style={styles.optionItem} onPress={handleManageCategories}>
+            <View style={styles.optionLeft}>
+              <Ionicons 
+                name="albums-outline" 
+                size={24} 
+                color={theme.text} 
+              />
+              <Text style={styles.optionText}>
+                {'Gestionar Categorias'}
+              </Text>
+            </View>
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={theme.textSecondary} 
+            />
+          </TouchableOpacity>
+
+          {/* Gestionar Tags de Productos - OWNERS y ADMINS */}
+          <TouchableOpacity style={styles.optionItem} onPress={handleManageTags}>
+            <View style={styles.optionLeft}>
+              <Ionicons 
+                name="pricetag-outline" 
+                size={24} 
+                color={theme.text} 
+              />
+              <Text style={styles.optionText}>
+                {'Gestionar Tags'}
+              </Text>
+            </View>
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={theme.textSecondary} 
+            />
+          </TouchableOpacity>
 
           {/* Gestionar Restaurantes - OWNERS y ADMINS */}
           <TouchableOpacity style={styles.optionItem} onPress={handleManageRestaurants}>
@@ -87,7 +137,7 @@ const AdminScreen = ({ user, navigation }) => {
                 color={theme.text} 
               />
               <Text style={styles.optionText}>
-                {user?.role === 'admin' ? 'Gestionar Todos los Restaurantes' : 'Gestionar Mis Restaurantes'}
+                {'Gestionar Restaurantes'}
               </Text>
             </View>
             <Ionicons 
@@ -157,6 +207,7 @@ const AdminScreen = ({ user, navigation }) => {
           </Text>
         </View>
       </View>
+      </ScrollView>
     </View>
   );
 };

@@ -12,14 +12,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../context/ThemeContext';
 import { 
-  getAllRestaurantTagsAdmin, 
-  deleteRestaurantTag, 
-  reactivateRestaurantTag 
-} from '../../../services/restaurantTagService';
+  getAllTags, 
+  deleteTag
+} from '../../../services/tagService';
+import { getRestaurantById } from '../../../services/restaurantService';
 
-const ManageRestaurantTagsScreen = ({ navigation, user }) => {
+const ManageTagsScreen = ({ navigation, user }) => {
   const { theme } = useTheme();
   const [tags, setTags] = useState([]);
+  const [groupedTags, setGroupedTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -27,8 +28,9 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
   const loadTags = useCallback(async () => {
     try {
       setLoading(true);
-      const tagsData = await getAllRestaurantTagsAdmin(user?._id);
+      const tagsData = await getAllTags(user?._id);
       setTags(tagsData);
+      groupTagsByRestaurant(tagsData);
     } catch (error) {
       console.error('Error loading tags:', error);
       Alert.alert('Error', 'No se pudieron cargar los tags');
@@ -36,6 +38,38 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
       setLoading(false);
     }
   }, [user]);
+
+  // Agrupar tags por restaurante
+  const groupTagsByRestaurant = (tagsData) => {
+    const grouped = tagsData.reduce((acc, tag) => {
+      const restaurantId = tag.restaurant_id._id;
+      const restaurantName = tag.restaurant_id.name;
+      
+      if (!acc[restaurantId]) {
+        acc[restaurantId] = {
+          restaurant: {
+            _id: restaurantId,
+            name: restaurantName
+          },
+          tags: []
+        };
+      }
+      
+      acc[restaurantId].tags.push(tag);
+      return acc;
+    }, {});
+
+    // Convertir a array y ordenar tags por nombre
+    const groupedArray = Object.values(grouped).map(group => ({
+      ...group,
+      tags: group.tags.sort((a, b) => a.name.localeCompare(b.name))
+    }));
+
+    // Ordenar grupos por nombre de restaurante
+    groupedArray.sort((a, b) => a.restaurant.name.localeCompare(b.restaurant.name));
+    
+    setGroupedTags(groupedArray);
+  };
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
@@ -60,16 +94,32 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
 
   // Navegar a agregar tag
   const handleAddTag = () => {
-    navigation.navigate('AddRestaurantTag', { user });
+    navigation.navigate('AddTag', { user });
   };
 
   // Navegar a editar tag
-  const handleEditTag = (tag) => {
-    navigation.navigate('AddRestaurantTag', { 
-      user,
-      tag,
-      isEdit: true
-    });
+  const handleEditTag = async (tag) => {
+    try {
+      // Cargar restaurante completo con address
+      const fullRestaurant = await getRestaurantById(tag.restaurant_id._id);
+      
+      navigation.navigate('AddTag', { 
+        user,
+        tag: {
+          ...tag,
+          restaurant_id: fullRestaurant // Reemplazar con el restaurante completo
+        },
+        isEdit: true
+      });
+    } catch (error) {
+      console.error('Error loading restaurant details:', error);
+      // Fallback: navegar con datos incompletos
+      navigation.navigate('AddTag', { 
+        user,
+        tag,
+        isEdit: true
+      });
+    }
   };
 
   // Eliminar tag
@@ -90,8 +140,8 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
 
   const confirmDeleteTag = async (tag) => {
     try {
-      await deleteRestaurantTag(tag._id, user?._id);
-      Alert.alert('¡Éxito!', 'Tag desactivado exitosamente');
+      await deleteTag(tag._id, user?._id);
+      Alert.alert('¡Éxito!', 'Tag eliminado exitosamente');
       loadTags(); // Recargar lista
     } catch (error) {
       console.error('Error deleting tag:', error);
@@ -99,69 +149,66 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
     }
   };
 
-  // Reactivar tag
-  const handleReactivateTag = async (tag) => {
-    try {
-      await reactivateRestaurantTag(tag._id, user?._id);
-      Alert.alert('¡Éxito!', 'Tag reactivado exitosamente');
-      loadTags(); // Recargar lista
-    } catch (error) {
-      console.error('Error reactivating tag:', error);
-      Alert.alert('Error', error.message || 'No se pudo reactivar el tag');
-    }
-  };
-
   // Renderizar item de tag
-  const renderTagItem = ({ item }) => (
-    <View style={[
-      styles.tagCard,
-      !item.is_active && styles.tagCardInactive
-    ]}>
+  const renderTagItem = (tag) => (
+    <View 
+      key={tag._id}
+      style={[
+        styles.tagItem,
+        !tag.is_active && styles.tagItemInactive
+      ]}
+    >
       <View style={styles.tagInfo}>
-        <View style={styles.tagHeader}>
-          <Text style={[
-            styles.tagName, 
-            { color: item.is_active ? theme.text : theme.textSecondary }
-          ]}>
-            {item.name}
-          </Text>
-          {!item.is_active && (
-            <View style={styles.inactiveBadge}>
-              <Text style={styles.inactiveBadgeText}>Inactivo</Text>
-            </View>
-          )}
-        </View>
-        
-        <Text style={[styles.tagDate, { color: theme.textSecondary }]}>
-          Creado: {new Date(item.created_at).toLocaleDateString()}
+        <Text style={[
+          styles.tagName, 
+          { color: tag.is_active ? theme.text : theme.textSecondary }
+        ]}>
+          {tag.name}
         </Text>
+        {!tag.is_active && (
+          <View style={styles.inactiveBadge}>
+            <Text style={styles.inactiveBadgeText}>Inactivo</Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.tagActions}>
-        {item.is_active ? (
+        {tag.is_active && (
           <>
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: theme.primary }]}
-              onPress={() => handleEditTag(item)}
+              onPress={() => handleEditTag(tag)}
             >
               <Ionicons name="pencil" size={16} color="#ffffff" />
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.actionButton, { backgroundColor: theme.danger }]}
-              onPress={() => handleDeleteTag(item)}
+              onPress={() => handleDeleteTag(tag)}
             >
               <Ionicons name="trash" size={16} color="#ffffff" />
             </TouchableOpacity>
           </>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.success }]}
-            onPress={() => handleReactivateTag(item)}
-          >
-            <Ionicons name="refresh" size={16} color="#ffffff" />
-          </TouchableOpacity>
         )}
+      </View>
+    </View>
+  );
+
+  // Renderizar grupo de restaurante
+  const renderRestaurantGroup = ({ item }) => (
+    <View style={styles.restaurantGroup}>
+      <View style={styles.restaurantHeader}>
+        <Ionicons name="restaurant" size={20} color={theme.primary} />
+        <Text style={[styles.restaurantName, { color: theme.text }]}>
+          {item.restaurant.name}
+        </Text>
+        <Text style={[styles.tagCount, { color: theme.textSecondary }]}>
+          ({item.tags.length} {item.tags.length === 1 ? 'tag' : 'tags'})
+        </Text>
+      </View>
+      
+      <View style={styles.tagsList}>
+        {item.tags.map(tag => renderTagItem(tag))}
       </View>
     </View>
   );
@@ -178,7 +225,7 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
         No hay tags creados
       </Text>
       <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        Los tags ayudan a categorizar los restaurantes
+        Los tags ayudan a identificar características especiales de los productos
       </Text>
     </View>
   );
@@ -221,11 +268,11 @@ const ManageRestaurantTagsScreen = ({ navigation, user }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de tags */}
+      {/* Lista de tags agrupados por restaurante */}
       <FlatList
-        data={tags}
-        keyExtractor={(item) => item._id}
-        renderItem={renderTagItem}
+        data={groupedTags}
+        keyExtractor={(item) => item.restaurant._id}
+        renderItem={renderRestaurantGroup}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -285,48 +332,68 @@ const createStyles = (theme) => StyleSheet.create({
   listContainer: {
     padding: 20,
   },
-  tagCard: {
+  restaurantGroup: {
     backgroundColor: theme.cardBackground,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+    marginBottom: 20,
+    shadowColor: theme.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  restaurantHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: theme.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
   },
-  tagCardInactive: {
+  restaurantName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 10,
+    flex: 1,
+  },
+  tagCount: {
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  tagsList: {
+    padding: 10,
+  },
+  tagItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    marginVertical: 2,
+    borderRadius: 8,
+    backgroundColor: theme.background,
+  },
+  tagItemInactive: {
     opacity: 0.6,
   },
   tagInfo: {
-    flex: 1,
-  },
-  tagHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    flex: 1,
   },
   tagName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     marginRight: 10,
   },
   inactiveBadge: {
     backgroundColor: theme.textSecondary,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   inactiveBadgeText: {
     color: '#ffffff',
     fontSize: 10,
     fontWeight: '500',
-  },
-  tagDate: {
-    fontSize: 12,
   },
   tagActions: {
     flexDirection: 'row',
@@ -358,4 +425,4 @@ const createStyles = (theme) => StyleSheet.create({
   },
 });
 
-export default ManageRestaurantTagsScreen;
+export default ManageTagsScreen;
