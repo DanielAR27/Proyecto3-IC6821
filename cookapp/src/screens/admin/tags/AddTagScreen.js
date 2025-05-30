@@ -16,7 +16,7 @@ import { createTag, updateTag } from '../../../services/tagService';
 import { getAllRestaurants, getRestaurantsByOwner } from '../../../services/restaurantService';
 
 // Importar componentes
-import RestaurantSelector from '../RestaurantSelector';
+import RestaurantSelector from '../shared_components/RestaurantSelector';
 import TagForm from './components/TagForm';
 
 const AddTagScreen = ({ navigation, route }) => {

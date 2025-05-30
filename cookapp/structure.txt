@@ -19,8 +19,24 @@ COOKAPP/
 |   |    ├── favorites/
 |   |    │   └── FavoritesScreen.js       # Restaurantes y platos favoritos (8) -> (2)
 |   |    ├── admin/ -- Daniel
+|   |    |   ├── categories
+|   |    |   |    ├── components/
+|   |    |   |    |     └──  CategoryForm.js   # Form de categoria
+|   |    |   |    ├── AddCategoryScreen.js # Agregar un nuev tag de restaurante
+|   |    |   |    └── ManageCategoriesScreen.js # Gestionar tags de restaurantes existentes
+|   |    |   ├── products/
+|   |    |   |    ├── components/
+|   |    |   |    |     ├── ProductImageUpload.js    # Específico para productos (600x400)
+|   |    |   |    |     ├── ProductForm.js           # Formulario básico del producto
+|   |    |   |    |     └─ CategorySelector.js      # Selector de categorías por restaurante
+|   |    |   |    ├── AddProductScreen.js            # Agregar nuevo producto
+|   |    |   |    ├── ManageProductsScreen.js        # Gestionar productos existentes  
+|   |    |   |    └── UpdateProductScreen.js         # Actualizar un producto
+|   |    |   ├── restaurant-tags
+|   |    |   |    ├── AddRestaurantTagScreen.js # Agregar un nuev tag global
+|   |    |   |    └── ManageRestaurantTagsScreen.js # Gestionar tags globales existentes
 |   |    |   ├── restaurants
-|   |    |   |    ├── components
+|   |    |   |    ├── components/
 |   |    |   |    |     ├── BannerUpload.js  # Componente para el Banner
 |   |    |   |    |     ├── OwnerSelectionModal.js # Seleccionar un owner
 |   |    |   |    |     ├── RestaurantForm.js # Formulario de restaurante
@@ -28,15 +44,22 @@ COOKAPP/
 |   |    |   |    ├── AddRestaurantScreen.js # Agregar nuevo restaurante
 |   |    |   |    ├── ManageRestaurantsScreen.js # Gestionar restaurantes existentes
 |   |    |   |    └── UpdateRestaurantScreen.js # Actualizar un restaurante
-|   |    |   ├── restaurants-tags
-|   |    |   |    ├── AddRestaurantTagScreen.js # Agregar un nuev tag de restaurante
-|   |    |   |    └── ManageRestaurantTagsScreen.js # Gestionar tags de restaurantes existentes
-|   |    |   ├── categories
-|   |    |   |    ├── components
-|   |    |   |    |     └──  CategoryForm.js   # Form de categoria
-|   |    |   |    ├── AddCategoryScreen.js # Agregar un nuev tag de restaurante
-|   |    |   |    └── ManageCategoriesScreen.js # Gestionar tags de restaurantes existentes
-|   |    |   ├── RestaurantSelector.js    # Selector de restaurantes
+|   |    |   ├── shared_components/
+|   |    |   |    ├── NutritionalInfoForm.js # Datos nutricionales
+|   |    |   |    ├── RestaurantSelector.js  # Selector de restaurantes
+|   |    |   |    └── TagSelector.js         # Selector de tags de restaurante
+|   |    |   ├── tags/
+|   |    |   |    ├── components/
+|   |    |   |    |     └── TagForm.js   # Formulario de tag de restaurante
+|   |    |   |    ├── AddTagScreen.js    # Agregar nuevo tag de restaurante
+|   |    |   |    └── ManageTagScreen.js # Gestionar tags de restaurante existentes
+|   |    |   ├── toppings/
+|   |    |   |    ├── components/
+|   |    |   |    |     ├── ProductSelector.js  # Selector de productos
+|   |    |   |    |     └── ToppingForm.js     # Formulario de topping
+|   |    |   |    ├── AddToppingScreen.js     # Agregar un topping
+|   |    |   |    ├── ManageToppingsScreen.js  # Gestionar toppings existentes
+|   |    |   |    └── UpdateToppingScreen.js  # Actualizar un topping
 |   |    │   └── AdminScreen.js           # Panel principal de admin
 |   |    ├── profile/ -- Cristhian
 |   |    │   ├── ProfileScreen.js         # Perfil principal
@@ -49,8 +72,13 @@ COOKAPP/
 │   │   ├── CustomTabBar.js 
 │   │   └── ThemeToggle.js
 │   ├── services/
-|   |   ├── * Agregar más servicios
-│   │   └── authService.js
+|   |   ├── authService.js                  # Servicio de API para autenticación
+|   |   ├── categoryService.js              # Servicio de API para categorias
+|   |   ├── productService.js               # Servicio de API para productos
+|   |   ├── restaurantService.js            # Servicio de API para restaurantes
+|   |   ├── restaurantTagService.js         # Servicio de API para tags globales
+|   |   ├── tagService.js                   # Servicio de API para tags por restaurante
+│   │   └── toppingService.js               # Servicio de API para toppings
 │   ├── context/
 │   │   └── ThemeContext.js
 │   └── styles/

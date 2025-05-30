@@ -10,6 +10,12 @@ import ManageRestaurantsScreen from './admin/restaurants/ManageRestaurantsScreen
 import UpdateRestaurantScreen from './admin/restaurants/UpdateRestaurantScreen';
 import ManageRestaurantTagsScreen from './admin/restaurant-tags/ManageRestaurantTagsScreen';
 import AddRestaurantTagScreen from './admin/restaurant-tags/AddRestaurantTagScreen';
+import ManageProductsScreen from './admin/products/ManageProductsScreen';
+import AddProductScreen from './admin/products/AddProductScreen';
+import UpdateProductScreen from './admin/products/UpdateProductScreen';
+import ManageToppingsScreen from './admin/toppings/ManageToppingsScreen';
+import AddToppingScreen from './admin/toppings/AddToppingScreen';
+import UpdateToppingScreen from './admin/toppings/UpdateToppingScreen';
 import ManageCategoriesScreen from './admin/categories/ManageCategoriesScreen';
 import AddCategoryScreen from './admin/categories/AddCategoryScreen';
 import ManageTagsScreen from './admin/tags/ManageTagsScreen';
@@ -45,6 +51,24 @@ const AdminStackNavigator = ({ user }) => {
       </AdminStack.Screen>
       <AdminStack.Screen name="AddRestaurantTag">
         {(props) => <AddRestaurantTagScreen {...props} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageProducts">
+        {(props) => <ManageProductsScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddProduct">
+        {(props) => <AddProductScreen {...props} route={{...props.route, params: {user}}} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="UpdateProduct">
+        {(props) => <UpdateProductScreen {...props} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="ManageToppings">
+        {(props) => <ManageToppingsScreen {...props} user={user} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="AddTopping">
+        {(props) => <AddToppingScreen {...props} route={{...props.route, params: {user}}} />}
+      </AdminStack.Screen>
+      <AdminStack.Screen name="UpdateTopping">
+        {(props) => <UpdateToppingScreen {...props} />}
       </AdminStack.Screen>
       <AdminStack.Screen name="ManageCategories">
         {(props) => <ManageCategoriesScreen {...props} user={user} />}

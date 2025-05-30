@@ -17,7 +17,7 @@ import { createCategory, updateCategory } from '../../../services/categoryServic
 import { getAllRestaurants, getRestaurantsByOwner } from '../../../services/restaurantService';
 
 // Importar componentes
-import RestaurantSelector from '../RestaurantSelector';
+import RestaurantSelector from '../shared_components/RestaurantSelector';
 import CategoryForm from './components/CategoryForm';
 
 const AddCategoryScreen = ({ navigation, route }) => {
