@@ -31,13 +31,13 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-web-browser"
-    ],
+    "plugins": ["expo-web-browser"],
     "extra": {
       "eas": {
         "projectId": "2a168e38-b6b1-41c2-bb1a-a6aeae7c0941"
-      }
+      },
+      "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "8348128087-pbq20qn3k627ed5dackc0e0ss4foeuk1.apps.googleusercontent.com",
+      "EXPO_PUBLIC_API_BASE_URL": "https://cocina-express-api.onrender.com/api"
     }
   }
 }
