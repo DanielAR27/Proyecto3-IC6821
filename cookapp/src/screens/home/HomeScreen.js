@@ -128,9 +128,12 @@ const HomeScreen = ({ user }) => {
 
   // Verificar si el restaurante está abierto ahora
   const checkIfRestaurantOpen = (restaurant) => {
+    // Si el restaurante no está activo, definitivamente está cerrado
     if (!restaurant.is_active) return false;
 
-    // TODO: Implementar lógica real usando business_hours
+    // Por ahora, si no hay business_hours configurados, asumimos que está abierto
+    if (!restaurant.business_hours) return true;
+
     const now = new Date();
     const dayOfWeek = [
       "sunday",
@@ -141,12 +144,17 @@ const HomeScreen = ({ user }) => {
       "friday",
       "saturday",
     ][now.getDay()];
-    const currentDay = restaurant.business_hours?.[dayOfWeek];
+    const currentDay = restaurant.business_hours[dayOfWeek];
 
+    // Si no hay configuración para hoy o está marcado como cerrado
     if (!currentDay || currentDay.closed) return false;
 
-    // Por ahora retorna true si tiene horarios configurados
-    return currentDay.open && currentDay.close;
+    // Si no tiene horarios de apertura/cierre configurados, asumimos abierto
+    if (!currentDay.open || !currentDay.close) return true;
+
+    // TODO: Aquí podrías implementar verificación de hora actual vs horarios
+    // Por ahora retornamos true si tiene horarios configurados
+    return true;
   };
 
   // Formatear dirección completa
