@@ -21,10 +21,14 @@ import AddCategoryScreen from './admin/categories/AddCategoryScreen';
 import ManageTagsScreen from './admin/tags/ManageTagsScreen';
 import AddTagScreen from './admin/tags/AddTagScreen';
 import ProfileScreen from './profile/ProfileScreen';
+import EditProfileScreen from './profile/EditProfileScreen';
+import AddressManagementScreen from './profile/AddressManagementScreen';
+import PaymentMethodsScreen from './profile/PaymentMethodsScreen';
 import CustomTabBar from '../components/CustomTabBar';
 
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
+const ProfileStack = createStackNavigator();
 
 // Stack Navigator para Admin
 const AdminStackNavigator = ({ user }) => {
@@ -85,6 +89,22 @@ const AdminStackNavigator = ({ user }) => {
     </AdminStack.Navigator>
   );
 };
+const ProfileStackNavigator = ({ user, onLogout }) => {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStack.Screen name="ProfileMain">
+        {(props) => <ProfileScreen {...props} user={user} onLogout={onLogout} />}
+      </ProfileStack.Screen>
+      <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <ProfileStack.Screen name="AddressManagement">
+        {(props) => <AddressManagementScreen {...props} route={{...props.route, params: { user }}} />}
+      </ProfileStack.Screen>
+      <ProfileStack.Screen name="PaymentMethods">
+        {(props) => <PaymentMethodsScreen {...props} route={{...props.route, params: { user }}} />}
+      </ProfileStack.Screen>
+    </ProfileStack.Navigator>
+  );
+};
 
 const MainTabNavigator = ({ user, onLogout }) => {
   return (
@@ -111,7 +131,7 @@ const MainTabNavigator = ({ user, onLogout }) => {
       )}
       
       <Tab.Screen name="Profile">
-        {() => <ProfileScreen user={user} onLogout={onLogout} />}
+        {() => <ProfileStackNavigator user={user} onLogout={onLogout} />}
       </Tab.Screen>
     </Tab.Navigator>
   );

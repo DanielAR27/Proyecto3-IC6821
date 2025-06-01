@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { ScrollView } from 'react-native-gesture-handler';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
-const ProfileScreen = ({ user, onLogout }) => {
+const ProfileScreen = ({ user, onLogout, navigation }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const [currentUser, setCurrentUser] = useState(user);
 
   const handleUpdateProfile = () => {
-    Alert.alert('Próximamente', 'La función de actualizar datos estará disponible pronto');
+    navigation.navigate('EditProfile', { user: currentUser });
   };
 
   const handleLogout = () => {
@@ -21,27 +25,44 @@ const ProfileScreen = ({ user, onLogout }) => {
     );
   };
 
+  // 🔄 Recargar datos actualizados cada vez que se vuelve a esta pantalla
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUser = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/users/${user._id}`);
+          const result = await response.json();
+          if (result?.data) {
+            setCurrentUser(result.data);
+          }
+        } catch (err) {
+          console.error('Error cargando perfil:', err);
+        }
+      };
+      fetchUser();
+    }, [user._id])
+  );
+
   const styles = createStyles(theme);
 
   return (
-    <View style={styles.container}>
+  <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Cuenta</Text>
       </View>
 
       <View style={styles.profileContainer}>
-        {user?.profile_image && (
+        {currentUser?.profile_image && (
           <Image 
-            source={{ uri: user.profile_image }} 
+            source={{ uri: currentUser.profile_image }} 
             style={styles.profilePic} 
           />
         )}
-        <Text style={styles.userName}>{user?.name}</Text>
-        <Text style={styles.userEmail}>{user?.email}</Text>
+        <Text style={styles.userName}>{currentUser?.name}</Text>
+        <Text style={styles.userEmail}>{currentUser?.email}</Text>
       </View>
 
       <View style={styles.optionsContainer}>
-        {/* Cambiar Tema */}
         <TouchableOpacity style={styles.optionItem} onPress={toggleTheme}>
           <View style={styles.optionLeft}>
             <Ionicons 
@@ -60,7 +81,22 @@ const ProfileScreen = ({ user, onLogout }) => {
           />
         </TouchableOpacity>
 
-        {/* Actualizar Datos */}
+        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('AddressManagement')}>
+          <View style={styles.optionLeft}>
+            <Ionicons name="location-outline" size={24} color={theme.text} />
+            <Text style={styles.optionText}>Gestionar Direcciones</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('PaymentMethods')}>
+          <View style={styles.optionLeft}>
+            <Ionicons name="card-outline" size={24} color={theme.text} />
+            <Text style={styles.optionText}>Métodos de Pago</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.optionItem} onPress={handleUpdateProfile}>
           <View style={styles.optionLeft}>
             <Ionicons 
@@ -77,7 +113,6 @@ const ProfileScreen = ({ user, onLogout }) => {
           />
         </TouchableOpacity>
 
-        {/* Cerrar Sesión */}
         <TouchableOpacity style={[styles.optionItem, styles.lastOptionItem]} onPress={handleLogout}>
           <View style={styles.optionLeft}>
             <Ionicons 
@@ -96,7 +131,7 @@ const ProfileScreen = ({ user, onLogout }) => {
           />
         </TouchableOpacity>
       </View>
-    </View>
+  </ScrollView>
   );
 };
 
