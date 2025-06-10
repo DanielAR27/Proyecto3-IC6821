@@ -17,7 +17,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const HomeScreen = ({ user }) => {
+const HomeScreen = ({ user, navigation }) => {
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [restaurants, setRestaurants] = useState([]);
@@ -216,7 +216,10 @@ const HomeScreen = ({ user }) => {
       return;
     }
     // Navegar a pantalla de detalles del restaurante
-    Alert.alert("Próximamente", `Abriendo ${restaurant.name}...`);
+    navigation.navigate("Restaurant", {
+      restaurantId: restaurant.id,
+      restaurantName: restaurant.name
+    });
   };
 
   const renderPromoBanner = () => (

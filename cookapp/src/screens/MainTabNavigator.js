@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './home/HomeScreen';
+import RestaurantScreen from './shared/RestaurantScreen';
 import OrdersScreen from './orders/OrdersScreen';
 import FavoritesScreen from './favorites/FavoritesScreen';
 import AdminScreen from './admin/AdminScreen';
@@ -29,6 +30,22 @@ import CustomTabBar from '../components/CustomTabBar';
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
+const HomeStack = createStackNavigator();
+
+// Stack Navigator para Home (incluye RestaurantScreen)
+const HomeStackNavigator = ({ user }) => {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="HomeMain">
+        {(props) => <HomeScreen {...props} user={user} />}
+      </HomeStack.Screen>
+      <HomeStack.Screen 
+        name="Restaurant" 
+        component={RestaurantScreen} 
+      />
+    </HomeStack.Navigator>
+  );
+};
 
 // Stack Navigator para Admin
 const AdminStackNavigator = ({ user }) => {
@@ -116,7 +133,7 @@ const MainTabNavigator = ({ user, onLogout }) => {
       initialRouteName="Home"
     >
       <Tab.Screen name="Home">
-        {() => <HomeScreen user={user} />}
+        {(props) => <HomeStackNavigator {...props} user={user} />}
       </Tab.Screen>
       
       <Tab.Screen name="Orders" component={OrdersScreen} />
