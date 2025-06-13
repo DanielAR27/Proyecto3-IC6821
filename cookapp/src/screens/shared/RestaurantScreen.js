@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   StyleSheet,
   Text,
@@ -117,7 +118,7 @@ const RestaurantScreen = ({ navigation, route }) => {
   });
 
   const handleProductPress = (product) => {
-    // TODO: Navegar a pantalla de detalle del producto
+    // Navegar a pantalla de detalle del producto
     Alert.alert('Producto', `Seleccionaste: ${product.name}`);
   };
 

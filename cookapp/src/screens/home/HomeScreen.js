@@ -17,7 +17,11 @@ import { useTheme } from "../../context/ThemeContext";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const HomeScreen = ({ user, navigation }) => {
+// Importa el hook de navegación
+import { useNavigation } from '@react-navigation/native';
+
+const HomeScreen = ({ user }) => {
+  const navigation = useNavigation();
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [restaurants, setRestaurants] = useState([]);

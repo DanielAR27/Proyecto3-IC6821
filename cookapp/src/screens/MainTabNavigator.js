@@ -33,16 +33,14 @@ const ProfileStack = createStackNavigator();
 const HomeStack = createStackNavigator();
 
 // Stack Navigator para Home (incluye RestaurantScreen)
-const HomeStackNavigator = ({ user }) => {
+
+const HomeStackNavigator = ({ user, ...navigationProps }) => {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain">
-        {(props) => <HomeScreen {...props} user={user} />}
+        {(screenProps) => <HomeScreen {...screenProps} user={user} />}
       </HomeStack.Screen>
-      <HomeStack.Screen 
-        name="Restaurant" 
-        component={RestaurantScreen} 
-      />
+      <HomeStack.Screen name="Restaurant" component={RestaurantScreen} />
     </HomeStack.Navigator>
   );
 };
