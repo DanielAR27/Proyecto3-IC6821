@@ -29,15 +29,13 @@ const ProductDetailScreen = ({ navigation, route }) => {
   const [showAddToppings, setShowAddToppings] = useState(false);
   const [showRemoveToppings, setShowRemoveToppings] = useState(false);
 
-  // Ingredientes base simulados (normalmente vendrían del producto)
-  const baseIngredients = product?.base_ingredients || [
-    'Carne de res',
-    'Lechuga',
-    'Tomate',
-    'Cebolla',
-    'Queso cheddar',
-    'Salsa especial'
-  ];
+
+  // Ingredientes base reales del producto
+  const baseIngredients = product?.base_ingredients || [];
+
+  console.log('Product in ProductDetailScreen:', product);
+  console.log('Base ingredients from product:', product?.base_ingredients);
+  console.log('Processed baseIngredients:', baseIngredients);
 
   useEffect(() => {
     loadToppings();
@@ -195,24 +193,26 @@ const ProductDetailScreen = ({ navigation, route }) => {
         </View>
 
         {/* Ingredientes base */}
-        <View style={[styles.section, { backgroundColor: theme.surface }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Ingredientes base
-          </Text>
-          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            Este producto incluye:
-          </Text>
-          <View style={styles.ingredientsList}>
-            {baseIngredients.map((ingredient, index) => (
-              <View key={index} style={styles.ingredientItem}>
-                <Ionicons name="checkmark-circle" size={16} color={theme.success} />
-                <Text style={[styles.ingredientText, { color: theme.text }]}>
-                  {ingredient}
-                </Text>
-              </View>
-            ))}
+        {baseIngredients.length > 0 && (
+          <View style={[styles.section, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Ingredientes base
+            </Text>
+            <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              Este producto incluye:
+            </Text>
+            <View style={styles.ingredientsList}>
+              {baseIngredients.map((ingredient, index) => (
+                <View key={index} style={styles.ingredientItem}>
+                  <Ionicons name="checkmark-circle" size={16} color={theme.success} />
+                  <Text style={[styles.ingredientText, { color: theme.text }]}>
+                    {ingredient}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Quitar ingredientes */}
         <View style={[styles.section, { backgroundColor: theme.surface }]}>
@@ -237,27 +237,33 @@ const ProductDetailScreen = ({ navigation, route }) => {
           
           {showRemoveToppings && (
             <View style={styles.optionsList}>
-              {baseIngredients.map((ingredient, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.optionItem,
-                    selectedRemoveToppings.includes(ingredient) && styles.selectedOption
-                  ]}
-                  onPress={() => handleRemoveIngredient(ingredient)}
-                >
-                  <Text style={[
-                    styles.optionText,
-                    { color: theme.text },
-                    selectedRemoveToppings.includes(ingredient) && { color: theme.primary }
-                  ]}>
-                    {ingredient}
-                  </Text>
-                  {selectedRemoveToppings.includes(ingredient) && (
-                    <Ionicons name="checkmark" size={20} color={theme.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
+              {baseIngredients.length > 0 ? (
+                baseIngredients.map((ingredient, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.optionItem,
+                      selectedRemoveToppings.includes(ingredient) && styles.selectedOption
+                    ]}
+                    onPress={() => handleRemoveIngredient(ingredient)}
+                  >
+                    <Text style={[
+                      styles.optionText,
+                      { color: theme.text },
+                      selectedRemoveToppings.includes(ingredient) && { color: theme.primary }
+                    ]}>
+                      {ingredient}
+                    </Text>
+                    {selectedRemoveToppings.includes(ingredient) && (
+                      <Ionicons name="checkmark" size={20} color={theme.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={[styles.noOptionsText, { color: theme.textSecondary }]}>
+                  Este producto no tiene ingredientes base definidos
+                </Text>
+              )}
             </View>
           )}
         </View>

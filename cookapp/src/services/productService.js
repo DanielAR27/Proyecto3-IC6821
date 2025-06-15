@@ -76,7 +76,7 @@ export const getAllProducts = async (userId) => {
         'Content-Type': 'application/json',
       }
     });
-    
+    console.log('Fetching all products for user:', userId);
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Error getting products');

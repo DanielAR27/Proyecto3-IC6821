@@ -118,6 +118,8 @@ const RestaurantScreen = ({ navigation, route }) => {
   });
 
   const handleProductPress = (product) => {
+    console.log('Navigating with product:', product); 
+    console.log('Product base_ingredients:', product.base_ingredients);
     navigation.navigate('ProductDetail', { 
       product: product, 
       restaurant: restaurant 

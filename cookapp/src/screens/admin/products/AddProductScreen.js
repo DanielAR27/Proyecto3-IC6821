@@ -16,6 +16,7 @@ import { createProduct } from '../../../services/productService';
 import { getAllRestaurants, getRestaurantsByOwner } from '../../../services/restaurantService';
 import { getCategoriesByRestaurant } from '../../../services/categoryService';
 
+
 // Importar componentes
 import RestaurantSelector from '../shared_components/RestaurantSelector';
 import CategorySelector from './components/CategorySelector';
@@ -23,6 +24,7 @@ import ProductForm from './components/ProductForm';
 import ProductImageUpload from './components/ProductImageUpload';
 import NutritionalInfoForm from '../shared_components/NutritionalInfoForm';
 import TagSelector from '../shared_components/TagSelector';
+import BaseIngredientsForm from './components/BaseIngredientsForm';
 
 const AddProductScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -47,6 +49,10 @@ const AddProductScreen = ({ navigation, route }) => {
     is_available: true,
     is_featured: false
   });
+
+  //estado de ingredientes base
+  const [baseIngredients, setBaseIngredients] = useState([]);
+
 
   // Estado de información nutricional
   const [nutritionalInfo, setNutritionalInfo] = useState({
@@ -135,6 +141,10 @@ const AddProductScreen = ({ navigation, route }) => {
     setNutritionalInfo(info);
   };
 
+  const handleBaseIngredientsChange = (ingredients) => {
+    setBaseIngredients(ingredients);
+  };
+
   const validateForm = () => {
     if (!selectedRestaurant) {
       Alert.alert('Error', 'Debe seleccionar un restaurante');
@@ -190,6 +200,9 @@ const AddProductScreen = ({ navigation, route }) => {
     try {
       setLoading(true);
       
+     
+      console.log('Base ingredients before sending:', baseIngredients);
+
       // Preparar datos del producto
       const productData = {
         restaurant_id: selectedRestaurant._id,
@@ -201,8 +214,11 @@ const AddProductScreen = ({ navigation, route }) => {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         is_available: formData.is_available,
         is_featured: formData.is_featured,
-        tags: selectedTags.map(tag => tag._id)
+        tags: selectedTags.map(tag => tag._id),
+        base_ingredients: baseIngredients, // para incluir ingredientes base
       };
+
+      console.log('Complete productData:', productData);
 
       // Agregar imagen si existe
       if (productImage) {
@@ -285,6 +301,13 @@ const AddProductScreen = ({ navigation, route }) => {
           <ProductForm 
             formData={formData}
             onInputChange={handleInputChange}
+            disabled={loading}
+          />
+
+          {/* AGREGAR base ingredientes */}
+          <BaseIngredientsForm 
+            baseIngredients={baseIngredients}
+            onIngredientsChange={handleBaseIngredientsChange}
             disabled={loading}
           />
 

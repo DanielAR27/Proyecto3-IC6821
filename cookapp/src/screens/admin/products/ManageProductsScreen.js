@@ -26,6 +26,7 @@ const ManageProductsScreen = ({ navigation, user }) => {
     try {
       setLoading(true);
       const productsData = await getAllProducts(user?._id);
+      console.log('Productos cargados:', productsData);
       setProducts(productsData);
       groupProductsByRestaurant(productsData);
     } catch (error) {

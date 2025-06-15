@@ -15,12 +15,14 @@ import { useTheme } from '../../../context/ThemeContext';
 import { updateProduct} from '../../../services/productService';
 import { getCategoriesByRestaurant } from '../../../services/categoryService';
 
+
 // Importar componentes reutilizables
 import CategorySelector from './components/CategorySelector';
 import ProductForm from './components/ProductForm';
 import ProductImageUpload from './components/ProductImageUpload';
 import NutritionalInfoForm from '../shared_components/NutritionalInfoForm';
 import TagSelector from '../shared_components/TagSelector'
+import BaseIngredientsForm from './components/BaseIngredientsForm'; 
 
 const UpdateProductScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
@@ -32,6 +34,7 @@ const UpdateProductScreen = ({ navigation, route }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
   const [productImage, setProductImage] = useState(null);
+  const [baseIngredients, setBaseIngredients] = useState([]);
 
   // Estados del formulario - inicializados con datos del producto
   const [formData, setFormData] = useState({
@@ -69,6 +72,9 @@ const UpdateProductScreen = ({ navigation, route }) => {
 
   const initializeFormData = () => {
     const p = product;
+
+    console.log('Product data:', p); 
+    console.log('Base ingredients from product:', p.base_ingredients); 
     
     setFormData({
       name: p.name || '',
@@ -93,6 +99,12 @@ const UpdateProductScreen = ({ navigation, route }) => {
     // Inicializar tags si existen
     if (p.tags && Array.isArray(p.tags)) {
       setSelectedTags(p.tags);
+    }
+
+    // Inicializar ingredientes base si existen
+    if (p.base_ingredients && Array.isArray(p.base_ingredients)) {
+      console.log('Setting base ingredients:', p.base_ingredients); 
+      setBaseIngredients(p.base_ingredients);
     }
 
     // Inicializar información nutricional
@@ -139,6 +151,10 @@ const UpdateProductScreen = ({ navigation, route }) => {
 
   const handleNutritionalInfoChange = (info) => {
     setNutritionalInfo(info);
+  };
+
+  const handleBaseIngredientsChange = (ingredients) => {
+    setBaseIngredients(ingredients);
   };
 
   const validateForm = () => {
@@ -201,7 +217,8 @@ const UpdateProductScreen = ({ navigation, route }) => {
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         is_available: formData.is_available,
         is_featured: formData.is_featured,
-        tags: selectedTags.map(tag => tag._id)
+        tags: selectedTags.map(tag => tag._id),
+        base_ingredients: baseIngredients,
       };
 
       // Solo incluir imagen si ha cambiado
@@ -277,6 +294,13 @@ const UpdateProductScreen = ({ navigation, route }) => {
             disabled={loading}
           />
 
+          {/* ingredientes base */}
+          <BaseIngredientsForm 
+            baseIngredients={baseIngredients}
+            onIngredientsChange={handleBaseIngredientsChange}
+            disabled={loading}
+          />
+
           {/* Upload de imagen */}
           <ProductImageUpload 
             productImage={productImage}
@@ -321,6 +345,8 @@ const UpdateProductScreen = ({ navigation, route }) => {
     </KeyboardAvoidingView>
   );
 };
+
+
 
 const createStyles = (theme) => StyleSheet.create({
   container: {
