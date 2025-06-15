@@ -118,8 +118,10 @@ const RestaurantScreen = ({ navigation, route }) => {
   });
 
   const handleProductPress = (product) => {
-    // Navegar a pantalla de detalle del producto
-    Alert.alert('Producto', `Seleccionaste: ${product.name}`);
+    navigation.navigate('ProductDetail', { 
+      product: product, 
+      restaurant: restaurant 
+    });
   };
 
   const renderHeader = () => (

@@ -19,6 +19,7 @@ import AddToppingScreen from './admin/toppings/AddToppingScreen';
 import UpdateToppingScreen from './admin/toppings/UpdateToppingScreen';
 import ManageCategoriesScreen from './admin/categories/ManageCategoriesScreen';
 import AddCategoryScreen from './admin/categories/AddCategoryScreen';
+import ProductDetailScreen from './customer/ProductDetailScreen';
 import ManageTagsScreen from './admin/tags/ManageTagsScreen';
 import AddTagScreen from './admin/tags/AddTagScreen';
 import ProfileScreen from './profile/ProfileScreen';
@@ -41,6 +42,7 @@ const HomeStackNavigator = ({ user, ...navigationProps }) => {
         {(screenProps) => <HomeScreen {...screenProps} user={user} />}
       </HomeStack.Screen>
       <HomeStack.Screen name="Restaurant" component={RestaurantScreen} />
+      <HomeStack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </HomeStack.Navigator>
   );
 };
