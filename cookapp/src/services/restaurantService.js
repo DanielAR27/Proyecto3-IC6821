@@ -37,7 +37,7 @@ export const getRestaurantById = async (id) => {
 // Obtener restaurantes por owner
 export const getRestaurantsByOwner = async (ownerId, userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/restaurants/owner/${ownerId}?user_id=${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/restaurants/owner/${ownerId}?user_id=${userId}`, {
       method: 'GET',  // ← Cambiar a GET
       headers: {
         'Content-Type': 'application/json',
