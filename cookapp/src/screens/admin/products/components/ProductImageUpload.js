@@ -43,7 +43,7 @@ const ProductImageUpload = ({ productImage, onImageSelected }) => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [3, 2], // Ratio 3:2 para productos
         quality: 0.8,

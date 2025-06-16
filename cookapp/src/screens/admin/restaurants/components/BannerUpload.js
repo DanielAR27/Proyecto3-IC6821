@@ -43,7 +43,7 @@ const BannerUpload = ({ bannerImage, onImageSelected }) => {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [8, 3], // Ratio 8:3 para banner
         quality: 0.8,
