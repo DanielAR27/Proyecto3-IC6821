@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import FavoriteButton from '../../components/FavoriteButton';
 import { getToppingsByRestaurant } from '../../services/toppingService';
 
 const ProductDetailScreen = ({ navigation, route }) => {
@@ -173,9 +174,17 @@ const ProductDetailScreen = ({ navigation, route }) => {
 
         {/* Información básica */}
         <View style={[styles.infoSection, { backgroundColor: theme.surface }]}>
-          <Text style={[styles.productName, { color: theme.text }]}>
-            {product.name}
-          </Text>
+          <View style={styles.productTitleRow}>
+            <Text style={[styles.productName, { color: theme.text }]}>
+              {product.name}
+            </Text>
+            <FavoriteButton 
+              type="product"
+              item={product}
+              restaurant={restaurant}
+              size="medium"
+            />
+          </View>
           <Text style={[styles.productDescription, { color: theme.textSecondary }]}>
             {product.description}
           </Text>
@@ -191,6 +200,7 @@ const ProductDetailScreen = ({ navigation, route }) => {
             </View>
           </View>
         </View>
+        
 
         {/* Ingredientes base */}
         {baseIngredients.length > 0 && (
@@ -459,6 +469,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
+  },
+  productTitleRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
   },
   productDescription: {
     fontSize: 16,

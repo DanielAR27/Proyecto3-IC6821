@@ -9,6 +9,7 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import CompleteProfileScreen from './src/screens/auth/CompleteProfileScreen';
 import MainTabNavigator from './src/screens/MainTabNavigator';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { FavoritesProvider } from './src/context/FavoritesContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -81,8 +82,9 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <NavigationContainer>
-        {currentScreen === 'loading' && (
+      <FavoritesProvider> 
+        <NavigationContainer>
+          {currentScreen === 'loading' && (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Cargando...</Text>
           </View>
@@ -108,7 +110,8 @@ export default function App() {
             onLogout={handleLogout}
           />
         )}
-      </NavigationContainer>
+        </NavigationContainer>
+      </FavoritesProvider>
     </ThemeProvider>
   );
 }

@@ -13,7 +13,9 @@ import {
   ActivityIndicator,
   FlatList
 } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
+import FavoriteButton from '../../components/FavoriteButton';
 import { useTheme } from '../../context/ThemeContext';
 import { getRestaurantById } from '../../services/restaurantService';
 import { getCategoriesByRestaurant } from '../../services/categoryService';
@@ -126,7 +128,7 @@ const RestaurantScreen = ({ navigation, route }) => {
     });
   };
 
-  const renderHeader = () => (
+const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity 
         style={styles.backButton} 
@@ -137,7 +139,13 @@ const RestaurantScreen = ({ navigation, route }) => {
       
       <View style={styles.headerActions}>
         <TouchableOpacity style={styles.headerAction}>
-          <Ionicons name="heart-outline" size={24} color="#fff" />
+          <FavoriteButton 
+            type="restaurant"
+            item={restaurant}
+            size="small"
+            showBackground={false}
+            iconColor="#fff"
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerAction}>
           <Ionicons name="share-outline" size={24} color="#fff" />
@@ -148,9 +156,10 @@ const RestaurantScreen = ({ navigation, route }) => {
 
   const renderRestaurantInfo = () => (
     <View style={styles.restaurantInfo}>
-      <View style={styles.restaurantHeader}>
-        <View style={styles.restaurantTitleContainer}>
-          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+      <View style={styles.restaurantTitleRow}>
+      
+        <Text style={styles.restaurantName}>{restaurant.name}</Text>
+        <View style={styles.titleActions}>
           <View style={styles.statusContainer}>
             <View style={[
               styles.statusDot, 
@@ -365,6 +374,17 @@ const createStyles = (theme) => StyleSheet.create({
     flex: 1,
     backgroundColor: theme.background,
   },
+    productTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  productFavoriteButton: {
+    marginLeft: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -405,6 +425,11 @@ const createStyles = (theme) => StyleSheet.create({
     position: 'relative',
     height: 250,
   },
+  headerFavoriteButton: {
+    backgroundColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   bannerImage: {
     width: '100%',
     height: '100%',
@@ -418,10 +443,10 @@ const createStyles = (theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingTop: 40,
+    paddingHorizontal: 10,
+    paddingBottom: 5,
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   backButton: {
     width: 40,
@@ -468,6 +493,12 @@ const createStyles = (theme) => StyleSheet.create({
     marginRight: 16,
   },
   restaurantName: {
+      restaurantTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.text,

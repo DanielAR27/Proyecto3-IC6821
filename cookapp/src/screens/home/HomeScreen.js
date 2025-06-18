@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
+import FavoriteButton from '../../components/FavoriteButton';
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -630,6 +631,12 @@ const createStyles = (theme) =>
       fontSize: 10,
       fontWeight: "600",
       marginLeft: 4,
+    },
+    favoriteButtonContainer: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      zIndex: 1,
     },
     restaurantInfo: {
       padding: 16,
