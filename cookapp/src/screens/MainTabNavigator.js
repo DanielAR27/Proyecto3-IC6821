@@ -1,32 +1,33 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './home/HomeScreen';
-import RestaurantScreen from './shared/RestaurantScreen';
-import OrdersScreen from './orders/OrdersScreen';
-import FavoritesScreen from './favorites/FavoritesScreen';
-import AdminScreen from './admin/AdminScreen';
-import AddRestaurantScreen from './admin/restaurants/AddRestaurantScreen';
-import ManageRestaurantsScreen from './admin/restaurants/ManageRestaurantsScreen';
-import UpdateRestaurantScreen from './admin/restaurants/UpdateRestaurantScreen';
-import ManageRestaurantTagsScreen from './admin/restaurant-tags/ManageRestaurantTagsScreen';
-import AddRestaurantTagScreen from './admin/restaurant-tags/AddRestaurantTagScreen';
-import ManageProductsScreen from './admin/products/ManageProductsScreen';
-import AddProductScreen from './admin/products/AddProductScreen';
-import UpdateProductScreen from './admin/products/UpdateProductScreen';
-import ManageToppingsScreen from './admin/toppings/ManageToppingsScreen';
-import AddToppingScreen from './admin/toppings/AddToppingScreen';
-import UpdateToppingScreen from './admin/toppings/UpdateToppingScreen';
-import ManageCategoriesScreen from './admin/categories/ManageCategoriesScreen';
-import AddCategoryScreen from './admin/categories/AddCategoryScreen';
-import ProductDetailScreen from './customer/ProductDetailScreen';
-import ManageTagsScreen from './admin/tags/ManageTagsScreen';
-import AddTagScreen from './admin/tags/AddTagScreen';
-import ProfileScreen from './profile/ProfileScreen';
-import EditProfileScreen from './profile/EditProfileScreen';
-import AddressManagementScreen from './profile/AddressManagementScreen';
-import PaymentMethodsScreen from './profile/PaymentMethodsScreen';
-import CustomTabBar from '../components/CustomTabBar';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
+import HomeScreen from "./home/HomeScreen";
+import RestaurantScreen from "./shared/RestaurantScreen";
+import OrdersScreen from "./orders/OrdersScreen";
+import FavoritesScreen from "./favorites/FavoritesScreen";
+import AdminScreen from "./admin/AdminScreen";
+import AddRestaurantScreen from "./admin/restaurants/AddRestaurantScreen";
+import ManageRestaurantsScreen from "./admin/restaurants/ManageRestaurantsScreen";
+import UpdateRestaurantScreen from "./admin/restaurants/UpdateRestaurantScreen";
+import ManageRestaurantTagsScreen from "./admin/restaurant-tags/ManageRestaurantTagsScreen";
+import AddRestaurantTagScreen from "./admin/restaurant-tags/AddRestaurantTagScreen";
+import ManageProductsScreen from "./admin/products/ManageProductsScreen";
+import AddProductScreen from "./admin/products/AddProductScreen";
+import UpdateProductScreen from "./admin/products/UpdateProductScreen";
+import ManageToppingsScreen from "./admin/toppings/ManageToppingsScreen";
+import AddToppingScreen from "./admin/toppings/AddToppingScreen";
+import UpdateToppingScreen from "./admin/toppings/UpdateToppingScreen";
+import ManageCategoriesScreen from "./admin/categories/ManageCategoriesScreen";
+import AddCategoryScreen from "./admin/categories/AddCategoryScreen";
+import ProductDetailScreen from "./customer/ProductDetailScreen";
+import ManageTagsScreen from "./admin/tags/ManageTagsScreen";
+import AddTagScreen from "./admin/tags/AddTagScreen";
+import ProfileScreen from "./profile/ProfileScreen";
+import EditProfileScreen from "./profile/EditProfileScreen";
+import AddressManagementScreen from "./profile/AddressManagementScreen";
+import PaymentMethodsScreen from "./profile/PaymentMethodsScreen";
+import CustomTabBar from "../components/CustomTabBar";
+import CartScreen from "./cart/CartScreen";
 
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
@@ -43,6 +44,7 @@ const HomeStackNavigator = ({ user, ...navigationProps }) => {
       </HomeStack.Screen>
       <HomeStack.Screen name="Restaurant" component={RestaurantScreen} />
       <HomeStack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <HomeStack.Screen name="Cart" component={CartScreen} />
     </HomeStack.Navigator>
   );
 };
@@ -59,7 +61,12 @@ const AdminStackNavigator = ({ user }) => {
         {(props) => <AdminScreen {...props} user={user} />}
       </AdminStack.Screen>
       <AdminStack.Screen name="AddRestaurant">
-        {(props) => <AddRestaurantScreen {...props} route={{...props.route, params: {user}}} />}
+        {(props) => (
+          <AddRestaurantScreen
+            {...props}
+            route={{ ...props.route, params: { user } }}
+          />
+        )}
       </AdminStack.Screen>
       <AdminStack.Screen name="ManageRestaurants">
         {(props) => <ManageRestaurantsScreen {...props} user={user} />}
@@ -77,7 +84,12 @@ const AdminStackNavigator = ({ user }) => {
         {(props) => <ManageProductsScreen {...props} user={user} />}
       </AdminStack.Screen>
       <AdminStack.Screen name="AddProduct">
-        {(props) => <AddProductScreen {...props} route={{...props.route, params: {user}}} />}
+        {(props) => (
+          <AddProductScreen
+            {...props}
+            route={{ ...props.route, params: { user } }}
+          />
+        )}
       </AdminStack.Screen>
       <AdminStack.Screen name="UpdateProduct">
         {(props) => <UpdateProductScreen {...props} />}
@@ -86,7 +98,12 @@ const AdminStackNavigator = ({ user }) => {
         {(props) => <ManageToppingsScreen {...props} user={user} />}
       </AdminStack.Screen>
       <AdminStack.Screen name="AddTopping">
-        {(props) => <AddToppingScreen {...props} route={{...props.route, params: {user}}} />}
+        {(props) => (
+          <AddToppingScreen
+            {...props}
+            route={{ ...props.route, params: { user } }}
+          />
+        )}
       </AdminStack.Screen>
       <AdminStack.Screen name="UpdateTopping">
         {(props) => <UpdateToppingScreen {...props} />}
@@ -110,14 +127,26 @@ const ProfileStackNavigator = ({ user, onLogout }) => {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStack.Screen name="ProfileMain">
-        {(props) => <ProfileScreen {...props} user={user} onLogout={onLogout} />}
+        {(props) => (
+          <ProfileScreen {...props} user={user} onLogout={onLogout} />
+        )}
       </ProfileStack.Screen>
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
       <ProfileStack.Screen name="AddressManagement">
-        {(props) => <AddressManagementScreen {...props} route={{...props.route, params: { user }}} />}
+        {(props) => (
+          <AddressManagementScreen
+            {...props}
+            route={{ ...props.route, params: { user } }}
+          />
+        )}
       </ProfileStack.Screen>
       <ProfileStack.Screen name="PaymentMethods">
-        {(props) => <PaymentMethodsScreen {...props} route={{...props.route, params: { user }}} />}
+        {(props) => (
+          <PaymentMethodsScreen
+            {...props}
+            route={{ ...props.route, params: { user } }}
+          />
+        )}
       </ProfileStack.Screen>
     </ProfileStack.Navigator>
   );
@@ -135,18 +164,18 @@ const MainTabNavigator = ({ user, onLogout }) => {
       <Tab.Screen name="Home">
         {(props) => <HomeStackNavigator {...props} user={user} />}
       </Tab.Screen>
-      
+
       <Tab.Screen name="Orders" component={OrdersScreen} />
-      
+
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
-      
+
       {/* Tab de Admin solo para owners y admins */}
-      {(user?.role === 'owner' || user?.role === 'admin') && (
+      {(user?.role === "owner" || user?.role === "admin") && (
         <Tab.Screen name="Admin">
           {() => <AdminStackNavigator user={user} />}
         </Tab.Screen>
       )}
-      
+
       <Tab.Screen name="Profile">
         {() => <ProfileStackNavigator user={user} onLogout={onLogout} />}
       </Tab.Screen>

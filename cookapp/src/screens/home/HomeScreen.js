@@ -14,12 +14,13 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import FavoriteButton from '../../components/FavoriteButton';
+import FavoriteButton from "../../components/FavoriteButton";
+import CartBadge from "../../components/CartBadge";
 
 const { width: screenWidth } = Dimensions.get("window");
 
 // Importa el hook de navegación
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = ({ user }) => {
   const navigation = useNavigation();
@@ -223,7 +224,7 @@ const HomeScreen = ({ user }) => {
     // Navegar a pantalla de detalles del restaurante
     navigation.navigate("Restaurant", {
       restaurantId: restaurant.id,
-      restaurantName: restaurant.name
+      restaurantName: restaurant.name,
     });
   };
 
@@ -447,6 +448,7 @@ const HomeScreen = ({ user }) => {
           )}
         </View>
       </ScrollView>
+      <CartBadge />
     </View>
   );
 };
@@ -633,7 +635,7 @@ const createStyles = (theme) =>
       marginLeft: 4,
     },
     favoriteButtonContainer: {
-      position: 'absolute',
+      position: "absolute",
       top: 8,
       right: 8,
       zIndex: 1,
