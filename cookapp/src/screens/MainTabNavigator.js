@@ -29,11 +29,13 @@ import PaymentMethodsScreen from "./profile/PaymentMethodsScreen";
 import CustomTabBar from "../components/CustomTabBar";
 import CartScreen from "./cart/CartScreen";
 import CheckoutScreen from "./checkout/CheckoutScreen";
+import OrderDetailScreen from "./orders/OrderDetailScreen";
 
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
 const HomeStack = createStackNavigator();
+const OrdersStack = createStackNavigator();
 
 // Stack Navigator para Home (incluye RestaurantScreen)
 
@@ -155,6 +157,15 @@ const ProfileStackNavigator = ({ user, onLogout }) => {
   );
 };
 
+const OrdersStackNavigator = () => {
+  return (
+    <OrdersStack.Navigator screenOptions={{ headerShown: false }}>
+      <OrdersStack.Screen name="OrdersMain" component={OrdersScreen} />
+      <OrdersStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+    </OrdersStack.Navigator>
+  );
+};
+
 const MainTabNavigator = ({ user, onLogout }) => {
   return (
     <Tab.Navigator
@@ -168,7 +179,7 @@ const MainTabNavigator = ({ user, onLogout }) => {
         {(props) => <HomeStackNavigator {...props} user={user} />}
       </Tab.Screen>
 
-      <Tab.Screen name="Orders" component={OrdersScreen} />
+      <Tab.Screen name="Orders" component={OrdersStackNavigator} />
 
       <Tab.Screen name="Favorites" component={FavoritesScreen} />
 

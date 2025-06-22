@@ -5,10 +5,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   Alert,
-  Modal,
   ActivityIndicator,
-  Image,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -17,213 +17,376 @@ import { useOrders } from "../../context/OrderContext";
 
 const CheckoutScreen = ({ navigation }) => {
   const { theme } = useTheme();
-  const { items, restaurant, total, clearCart } = useCart();
+  const { items, total, restaurant, clearCart } = useCart();
   const { addOrder } = useOrders();
+
+  // Estados para el flujo de checkout
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [orderId, setOrderId] = useState(null);
+
+  // Estados para los datos del usuario
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [specialInstructions, setSpecialInstructions] = useState("");
+
+  // Animación para el check
+  const [checkScale] = useState(new Animated.Value(0));
 
   const styles = createStyles(theme);
 
+  const deliveryFee = 1500;
+  const finalTotal = total + deliveryFee;
+
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-      minimumFractionDigits: 0,
-    }).format(price);
+    return `₡${parseFloat(price).toLocaleString("es-CR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
-  const handleConfirmOrder = () => {
-    Alert.alert(
-      "¿Confirmar Pedido?",
-      `¿Está seguro de realizar este pedido por ${formatPrice(total)}?`,
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Confirmar",
-          onPress: processOrder,
-          style: "default",
-        },
-      ]
-    );
+  const validateForm = () => {
+    if (!deliveryAddress.trim()) {
+      Alert.alert("Error", "Por favor ingresa la dirección de entrega");
+      return false;
+    }
+    if (!phoneNumber.trim()) {
+      Alert.alert("Error", "Por favor ingresa tu número de teléfono");
+      return false;
+    }
+    return true;
   };
 
-  const processOrder = async () => {
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
+
+    // 1. Mostrar "Procesando..."
     setIsProcessing(true);
 
-    // Simular procesamiento de pago (3 segundos)
-    setTimeout(() => {
-      // Crear el pedido
-      const newOrder = {
-        id: `order_${Date.now()}`,
-        restaurant: restaurant,
-        items: items.map((item) => ({
-          ...item,
-          id: `${item.id}_${Date.now()}`, // Nuevo ID para el pedido
-        })),
-        total: total,
-        status: "confirmed", // confirmed, preparing, ready, delivered
-        orderDate: new Date().toISOString(),
+    try {
+      // Simular procesamiento de pago (2 segundos)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 2. Crear la orden
+      const orderData = {
+        items,
+        restaurant,
+        total: finalTotal,
+        deliveryAddress,
+        phoneNumber,
+        paymentMethod,
+        specialInstructions,
         estimatedDeliveryTime: new Date(
           Date.now() + 30 * 60 * 1000
-        ).toISOString(), // 30 minutos
+        ).toISOString(),
       };
 
-      // Agregar el pedido al contexto
-      addOrder(newOrder);
+      const newOrderId = addOrder(orderData);
+      setOrderId(newOrderId);
 
-      // Limpiar el carrito
-      clearCart();
-
+      // 3. Mostrar pantalla de éxito
       setIsProcessing(false);
       setShowSuccess(true);
 
-      // Después de 3 segundos, redirigir a pedidos
+      // 4. Animar el check
+      Animated.spring(checkScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+
+      // 5. Limpiar carrito después de 1 segundo
       setTimeout(() => {
-        setShowSuccess(false);
-        navigation.navigate("Orders");
-      }, 3000);
-    }, 3000);
+        clearCart();
+      }, 1000);
+    } catch (error) {
+      setIsProcessing(false);
+      Alert.alert(
+        "Error",
+        "Hubo un problema al procesar tu pedido. Intenta de nuevo."
+      );
+    }
   };
 
-  const renderOrderSummary = () => (
-    <View style={styles.summaryContainer}>
-      <Text style={styles.sectionTitle}>Resumen del Pedido</Text>
+  const handleBackToHome = () => {
+    setShowSuccess(false);
+    // Resetear completamente el stack de navegación
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: "Home",
+          state: {
+            routes: [{ name: "HomeMain" }],
+          },
+        },
+      ],
+    });
+  };
 
-      {/* Restaurante */}
-      <View style={styles.restaurantInfo}>
-        <Ionicons name="restaurant-outline" size={24} color={theme.primary} />
-        <Text style={styles.restaurantName}>{restaurant?.name}</Text>
-      </View>
+  const handleViewOrder = () => {
+    setShowSuccess(false);
+    // Resetear el stack y ir directo a Orders con el pedido específico
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: "Orders",
+          state: {
+            routes: [
+              { name: "OrdersMain" },
+              { name: "OrderDetail", params: { orderId } },
+            ],
+          },
+        },
+      ],
+    });
+  };
 
-      {/* Items */}
-      <View style={styles.itemsContainer}>
-        {items.map((item) => (
-          <View key={item.id} style={styles.orderItem}>
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>
-                {item.quantity}x {item.product.name}
-              </Text>
-              {item.toppings.length > 0 && (
-                <Text style={styles.itemToppings}>
-                  + {item.toppings.map((t) => t.name).join(", ")}
-                </Text>
-              )}
-              {item.specialInstructions.length > 0 && (
-                <Text style={styles.itemInstructions}>
-                  Nota: {item.specialInstructions}
-                </Text>
-              )}
-            </View>
-            <Text style={styles.itemPrice}>{formatPrice(item.subtotal)}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Total */}
-      <View style={styles.totalContainer}>
-        <Text style={styles.totalLabel}>Total a Pagar:</Text>
-        <Text style={styles.totalAmount}>{formatPrice(total)}</Text>
-      </View>
-    </View>
-  );
-
-  const renderPaymentMethod = () => (
-    <View style={styles.paymentContainer}>
-      <Text style={styles.sectionTitle}>Método de Pago</Text>
-      <View style={styles.paymentMethod}>
-        <Ionicons name="card-outline" size={24} color={theme.primary} />
-        <Text style={styles.paymentText}>Pago Simulado (Demo)</Text>
-        <Ionicons name="checkmark-circle" size={24} color={theme.success} />
-      </View>
-    </View>
-  );
-
-  const renderProcessingModal = () => (
-    <Modal visible={isProcessing} transparent={true} animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.processingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={styles.processingText}>Procesando Pago...</Text>
-          <Text style={styles.processingSubtext}>
-            Por favor espere mientras confirmamos su pedido
-          </Text>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const renderSuccessModal = () => (
-    <Modal visible={showSuccess} transparent={true} animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.successContainer}>
-          <Ionicons name="checkmark-circle" size={80} color={theme.success} />
-          <Text style={styles.successTitle}>¡Pedido Realizado!</Text>
-          <Text style={styles.successText}>
-            Su pedido ha sido confirmado exitosamente
-          </Text>
-          <Text style={styles.successSubtext}>
-            Será redirigido a sus pedidos...
-          </Text>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  if (!items || items.length === 0) {
+  // 🎉 Pantalla de éxito
+  if (showSuccess) {
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="cart-outline" size={80} color={theme.textSecondary} />
-        <Text style={styles.emptyTitle}>Carrito Vacío</Text>
-        <Text style={styles.emptyText}>
-          No hay productos en su carrito para procesar
-        </Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+      <View style={styles.successContainer}>
+        <Animated.View
+          style={[
+            styles.successCheckContainer,
+            { transform: [{ scale: checkScale }] },
+          ]}
         >
-          <Text style={styles.backButtonText}>Volver</Text>
-        </TouchableOpacity>
+          <Ionicons name="checkmark-circle" size={120} color="#10b981" />
+        </Animated.View>
+
+        <Text style={styles.successTitle}>¡Pago Procesado!</Text>
+        <Text style={styles.successSubtitle}>
+          Tu pedido ha sido confirmado exitosamente
+        </Text>
+
+        <View style={styles.orderInfoCard}>
+          <Text style={styles.orderNumberText}>
+            Pedido #{orderId?.slice(-8).toUpperCase()}
+          </Text>
+          <Text style={styles.totalText}>Total: {formatPrice(finalTotal)}</Text>
+          <Text style={styles.estimatedTimeText}>
+            🕐 Tiempo estimado: 25-35 minutos
+          </Text>
+        </View>
+
+        <View style={styles.successActions}>
+          <TouchableOpacity
+            style={styles.viewOrderButton}
+            onPress={handleViewOrder}
+          >
+            <Ionicons name="receipt-outline" size={20} color="white" />
+            <Text style={styles.viewOrderButtonText}>Ver Mi Pedido</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.backHomeButton}
+            onPress={handleBackToHome}
+          >
+            <Text style={styles.backHomeButtonText}>Seguir Comprando</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
+  // 🔄 Pantalla de procesando
+  if (isProcessing) {
+    return (
+      <View style={styles.processingContainer}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={styles.processingTitle}>Procesando tu pago...</Text>
+        <Text style={styles.processingSubtitle}>
+          Por favor espera mientras confirmamos tu orden
+        </Text>
+
+        <View style={styles.processingSteps}>
+          <View style={styles.processingStep}>
+            <Ionicons name="card-outline" size={24} color={theme.primary} />
+            <Text style={styles.processingStepText}>Verificando pago</Text>
+          </View>
+          <View style={styles.processingStep}>
+            <Ionicons
+              name="restaurant-outline"
+              size={24}
+              color={theme.textSecondary}
+            />
+            <Text
+              style={[
+                styles.processingStepText,
+                { color: theme.textSecondary },
+              ]}
+            >
+              Enviando al restaurante
+            </Text>
+          </View>
+          <View style={styles.processingStep}>
+            <Ionicons
+              name="checkmark-circle-outline"
+              size={24}
+              color={theme.textSecondary}
+            />
+            <Text
+              style={[
+                styles.processingStepText,
+                { color: theme.textSecondary },
+              ]}
+            >
+              Confirmando pedido
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // 📝 Formulario de checkout original
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Confirmar Pedido</Text>
-        <View style={styles.headerButton} />
+        <Text style={styles.headerTitle}>Finalizar Pedido</Text>
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {renderOrderSummary()}
-        {renderPaymentMethod()}
+        {/* Resumen del pedido */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Resumen del Pedido</Text>
+          <View style={styles.orderSummary}>
+            <Text style={styles.restaurantName}>{restaurant?.name}</Text>
+            {items.map((item, index) => (
+              <View key={index} style={styles.orderItem}>
+                <Text style={styles.orderItemName}>
+                  {item.quantity}x {item.product.name}
+                </Text>
+                <Text style={styles.orderItemPrice}>
+                  {formatPrice(item.subtotal)}
+                </Text>
+              </View>
+            ))}
+            <View style={styles.totalSection}>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Subtotal:</Text>
+                <Text style={styles.totalValue}>{formatPrice(total)}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Envío:</Text>
+                <Text style={styles.totalValue}>
+                  {formatPrice(deliveryFee)}
+                </Text>
+              </View>
+              <View style={[styles.totalRow, styles.finalTotalRow]}>
+                <Text style={styles.finalTotalLabel}>Total:</Text>
+                <Text style={styles.finalTotalValue}>
+                  {formatPrice(finalTotal)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Información de entrega */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Información de Entrega</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Dirección de entrega *</Text>
+            <TextInput
+              style={styles.textInput}
+              value={deliveryAddress}
+              onChangeText={setDeliveryAddress}
+              placeholder="Ingresa tu dirección completa"
+              placeholderTextColor={theme.textSecondary}
+              multiline
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Teléfono *</Text>
+            <TextInput
+              style={styles.textInput}
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              placeholder="Ej: 8888-8888"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="phone-pad"
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Instrucciones especiales</Text>
+            <TextInput
+              style={[styles.textInput, styles.textAreaInput]}
+              value={specialInstructions}
+              onChangeText={setSpecialInstructions}
+              placeholder="Ej: Casa azul, tocar el timbre..."
+              placeholderTextColor={theme.textSecondary}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        </View>
+
+        {/* Método de pago */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Método de Pago</Text>
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              paymentMethod === "card" && styles.paymentOptionSelected,
+            ]}
+            onPress={() => setPaymentMethod("card")}
+          >
+            <Ionicons name="card-outline" size={24} color={theme.primary} />
+            <Text style={styles.paymentOptionText}>
+              Tarjeta de Crédito/Débito
+            </Text>
+            <Ionicons
+              name={
+                paymentMethod === "card"
+                  ? "radio-button-on"
+                  : "radio-button-off"
+              }
+              size={24}
+              color={theme.primary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              paymentMethod === "cash" && styles.paymentOptionSelected,
+            ]}
+            onPress={() => setPaymentMethod("cash")}
+          >
+            <Ionicons name="cash-outline" size={24} color={theme.primary} />
+            <Text style={styles.paymentOptionText}>Efectivo</Text>
+            <Ionicons
+              name={
+                paymentMethod === "cash"
+                  ? "radio-button-on"
+                  : "radio-button-off"
+              }
+              size={24}
+              color={theme.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
-      {/* Footer con botón de confirmar */}
+      {/* Botón de confirmar */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.confirmButton}
-          onPress={handleConfirmOrder}
-          disabled={isProcessing}
+          onPress={handlePlaceOrder}
         >
           <Text style={styles.confirmButtonText}>
-            Confirmar Pedido - {formatPrice(total)}
+            Confirmar Pedido - {formatPrice(finalTotal)}
           </Text>
         </TouchableOpacity>
       </View>
-
-      {renderProcessingModal()}
-      {renderSuccessModal()}
     </View>
   );
 };
@@ -236,36 +399,29 @@ const createStyles = (theme) =>
     },
     header: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 20,
+      justifyContent: "space-between",
       paddingTop: 50,
-      paddingBottom: 15,
+      paddingBottom: 20,
+      paddingHorizontal: 20,
+      backgroundColor: theme.cardBackground,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
-    headerButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: "center",
-      alignItems: "center",
-    },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: "bold",
       color: theme.text,
     },
     content: {
       flex: 1,
-      paddingHorizontal: 20,
     },
-    summaryContainer: {
+    section: {
       backgroundColor: theme.cardBackground,
-      borderRadius: 16,
+      margin: 20,
+      marginBottom: 0,
       padding: 20,
-      marginTop: 20,
-      marginBottom: 16,
+      borderRadius: 12,
       shadowColor: theme.shadow,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
@@ -278,212 +434,249 @@ const createStyles = (theme) =>
       color: theme.text,
       marginBottom: 16,
     },
-    restaurantInfo: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 20,
-      paddingBottom: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
+
+    // Resumen del pedido
+    orderSummary: {
+      gap: 12,
     },
     restaurantName: {
       fontSize: 16,
       fontWeight: "600",
-      color: theme.text,
-      marginLeft: 12,
-    },
-    itemsContainer: {
-      marginBottom: 20,
+      color: theme.primary,
+      marginBottom: 8,
     },
     orderItem: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 16,
+      alignItems: "center",
     },
-    itemInfo: {
+    orderItemName: {
+      fontSize: 14,
+      color: theme.text,
       flex: 1,
-      marginRight: 16,
     },
-    itemName: {
-      fontSize: 16,
+    orderItemPrice: {
+      fontSize: 14,
       fontWeight: "600",
       color: theme.text,
-      marginBottom: 4,
     },
-    itemToppings: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      marginBottom: 2,
-    },
-    itemInstructions: {
-      fontSize: 13,
-      color: theme.textSecondary,
-      fontStyle: "italic",
-    },
-    itemPrice: {
-      fontSize: 16,
-      fontWeight: "bold",
-      color: theme.primary,
-    },
-    totalContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
+    totalSection: {
+      marginTop: 16,
       paddingTop: 16,
       borderTopWidth: 1,
       borderTopColor: theme.border,
     },
+    totalRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 8,
+    },
     totalLabel: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    totalValue: {
+      fontSize: 14,
+      color: theme.text,
+    },
+    finalTotalRow: {
+      marginTop: 8,
+      paddingTop: 8,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    finalTotalLabel: {
       fontSize: 18,
       fontWeight: "bold",
       color: theme.text,
     },
-    totalAmount: {
-      fontSize: 20,
+    finalTotalValue: {
+      fontSize: 18,
       fontWeight: "bold",
       color: theme.primary,
     },
-    paymentContainer: {
-      backgroundColor: theme.cardBackground,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 20,
-      shadowColor: theme.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
+
+    // Formulario
+    inputContainer: {
+      marginBottom: 16,
     },
-    paymentMethod: {
+    inputLabel: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: theme.text,
+      marginBottom: 8,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      color: theme.text,
+      backgroundColor: theme.background,
+    },
+    textAreaInput: {
+      height: 80,
+      textAlignVertical: "top",
+    },
+
+    // Métodos de pago
+    paymentOption: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: theme.background,
       padding: 16,
-      borderRadius: 12,
       borderWidth: 1,
-      borderColor: theme.success,
+      borderColor: theme.border,
+      borderRadius: 8,
+      marginBottom: 12,
+      gap: 12,
     },
-    paymentText: {
-      fontSize: 16,
-      fontWeight: "500",
-      color: theme.text,
+    paymentOptionSelected: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + "10",
+    },
+    paymentOptionText: {
       flex: 1,
-      marginLeft: 12,
+      fontSize: 16,
+      color: theme.text,
     },
+
+    // Footer
     footer: {
       padding: 20,
+      backgroundColor: theme.cardBackground,
       borderTopWidth: 1,
       borderTopColor: theme.border,
-      backgroundColor: theme.background,
     },
     confirmButton: {
       backgroundColor: theme.primary,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: "center",
-      shadowColor: theme.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 4,
     },
     confirmButtonText: {
-      color: "#fff",
+      color: "white",
       fontSize: 18,
       fontWeight: "bold",
     },
-    modalOverlay: {
+
+    // 🔄 Pantalla de procesando
+    processingContainer: {
       flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      backgroundColor: theme.background,
       justifyContent: "center",
       alignItems: "center",
-    },
-    processingContainer: {
-      backgroundColor: theme.cardBackground,
-      borderRadius: 20,
       padding: 40,
-      alignItems: "center",
-      marginHorizontal: 40,
-      shadowColor: theme.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 8,
     },
-    processingText: {
-      fontSize: 18,
+    processingTitle: {
+      fontSize: 24,
       fontWeight: "bold",
       color: theme.text,
       marginTop: 20,
-    },
-    processingSubtext: {
-      fontSize: 14,
-      color: theme.textSecondary,
-      textAlign: "center",
-      marginTop: 8,
-    },
-    successContainer: {
-      backgroundColor: theme.cardBackground,
-      borderRadius: 20,
-      padding: 40,
-      alignItems: "center",
-      marginHorizontal: 40,
-      shadowColor: theme.shadow,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 8,
-    },
-    successTitle: {
-      fontSize: 22,
-      fontWeight: "bold",
-      color: theme.text,
-      marginTop: 20,
-      marginBottom: 12,
-    },
-    successText: {
-      fontSize: 16,
-      color: theme.textSecondary,
-      textAlign: "center",
       marginBottom: 8,
     },
-    successSubtext: {
-      fontSize: 14,
+    processingSubtitle: {
+      fontSize: 16,
       color: theme.textSecondary,
       textAlign: "center",
+      marginBottom: 40,
     },
-    emptyContainer: {
+    processingSteps: {
+      gap: 20,
+      alignItems: "flex-start",
+    },
+    processingStep: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    processingStepText: {
+      fontSize: 16,
+      color: theme.primary,
+    },
+
+    // 🎉 Pantalla de éxito
+    successContainer: {
       flex: 1,
+      backgroundColor: theme.background,
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: theme.background,
-      paddingHorizontal: 40,
+      padding: 40,
     },
-    emptyTitle: {
-      fontSize: 22,
+    successCheckContainer: {
+      marginBottom: 30,
+    },
+    successTitle: {
+      fontSize: 28,
       fontWeight: "bold",
       color: theme.text,
-      marginTop: 20,
       marginBottom: 12,
+      textAlign: "center",
     },
-    emptyText: {
+    successSubtitle: {
       fontSize: 16,
       color: theme.textSecondary,
       textAlign: "center",
-      marginBottom: 30,
+      marginBottom: 40,
     },
-    backButton: {
+    orderInfoCard: {
+      backgroundColor: theme.cardBackground,
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 40,
+      alignItems: "center",
+      shadowColor: theme.shadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    orderNumberText: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: theme.text,
+      marginBottom: 8,
+    },
+    totalText: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: theme.primary,
+      marginBottom: 8,
+    },
+    estimatedTimeText: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    successActions: {
+      width: "100%",
+      gap: 16,
+    },
+    viewOrderButton: {
       backgroundColor: theme.primary,
-      paddingHorizontal: 30,
-      paddingVertical: 12,
-      borderRadius: 20,
+      borderRadius: 12,
+      paddingVertical: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
     },
-    backButtonText: {
-      color: "#fff",
+    viewOrderButtonText: {
+      color: "white",
       fontSize: 16,
-      fontWeight: "600",
+      fontWeight: "bold",
+    },
+    backHomeButton: {
+      backgroundColor: "transparent",
+      borderWidth: 2,
+      borderColor: theme.primary,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: "center",
+    },
+    backHomeButtonText: {
+      color: theme.primary,
+      fontSize: 16,
+      fontWeight: "bold",
     },
   });
 

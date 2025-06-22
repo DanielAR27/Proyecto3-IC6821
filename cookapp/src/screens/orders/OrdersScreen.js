@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
@@ -14,7 +15,7 @@ import { useOrders } from "../../context/OrderContext";
 
 const OrdersScreen = ({ navigation }) => {
   const { theme } = useTheme();
-  const { orders, getStatusText, getStatusColor } = useOrders();
+  const { orders, loading, getStatusText, getStatusColor } = useOrders();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
@@ -22,10 +23,14 @@ const OrdersScreen = ({ navigation }) => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simular actualización (en una app real, aquí harías fetch de la API)
-    setTimeout(() => {
+    try {
+      // Simular actualización (en una app real, aquí harías fetch de la API)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error("Error refreshing orders:", error);
+    } finally {
       setRefreshing(false);
-    }, 1000);
+    }
   };
 
   const formatPrice = (price) => {
@@ -60,14 +65,15 @@ const OrdersScreen = ({ navigation }) => {
 
   const filters = [
     { key: "all", label: "Todos", icon: "list-outline" },
+    { key: "pending", label: "Pendientes", icon: "time-outline" },
     {
       key: "confirmed",
       label: "Confirmados",
       icon: "checkmark-circle-outline",
     },
-    { key: "preparing", label: "En Preparación", icon: "time-outline" },
-    { key: "ready", label: "Listos", icon: "restaurant-outline" },
-    { key: "delivered", label: "Entregados", icon: "checkmark-done-outline" },
+    { key: "preparing", label: "En Preparación", icon: "restaurant-outline" },
+    { key: "ready", label: "Listos", icon: "checkmark-done-outline" },
+    { key: "delivered", label: "Entregados", icon: "checkmark-outline" },
   ];
 
   const renderFilters = () => (
@@ -88,9 +94,11 @@ const OrdersScreen = ({ navigation }) => {
           >
             <Ionicons
               name={filter.icon}
-              size={18}
+              size={16}
               color={
-                selectedFilter === filter.key ? theme.background : theme.primary
+                selectedFilter === filter.key
+                  ? theme.cardBackground
+                  : theme.text
               }
             />
             <Text
@@ -107,73 +115,91 @@ const OrdersScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderOrderCard = ({ item: order }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-      onPress={() => navigation.navigate("OrderDetail", { orderId: order.id })}
-      activeOpacity={0.8}
-    >
-      {/* Header del pedido */}
-      <View style={styles.orderHeader}>
-        <View style={styles.orderInfo}>
-          <Text style={styles.orderNumber}>
-            Pedido #{order.id.slice(-8).toUpperCase()}
-          </Text>
-          <Text style={styles.orderDate}>
-            {formatDate(order.orderDate)} • {formatTime(order.orderDate)}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(order.status, theme) + "20" },
-          ]}
-        >
-          <Text
+  const renderOrderCard = ({ item: order }) => {
+    // Validar que la orden tenga los datos necesarios
+    if (!order || !order.items || !Array.isArray(order.items)) {
+      console.warn("Invalid order data:", order);
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.orderCard}
+        onPress={() =>
+          navigation.navigate("OrderDetail", { orderId: order.id })
+        }
+        activeOpacity={0.8}
+      >
+        {/* Header del pedido */}
+        <View style={styles.orderHeader}>
+          <View style={styles.orderInfo}>
+            <Text style={styles.orderNumber}>
+              Pedido #{order.id?.slice(-8).toUpperCase() || "N/A"}
+            </Text>
+            <Text style={styles.orderDate}>
+              {order.orderDate
+                ? formatDate(order.orderDate)
+                : "Fecha no disponible"}{" "}
+              • {order.orderDate ? formatTime(order.orderDate) : "--:--"}
+            </Text>
+          </View>
+          <View
             style={[
-              styles.statusText,
-              { color: getStatusColor(order.status, theme) },
+              styles.statusBadge,
+              { backgroundColor: getStatusColor(order.status, theme) + "20" },
             ]}
           >
-            {getStatusText(order.status)}
+            <Text
+              style={[
+                styles.statusText,
+                { color: getStatusColor(order.status, theme) },
+              ]}
+            >
+              {getStatusText(order.status)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Restaurante */}
+        <View style={styles.restaurantSection}>
+          <Ionicons name="restaurant-outline" size={20} color={theme.primary} />
+          <Text style={styles.restaurantName}>
+            {order.restaurant?.name || "Restaurante no disponible"}
           </Text>
         </View>
-      </View>
 
-      {/* Restaurante */}
-      <View style={styles.restaurantSection}>
-        <Ionicons name="restaurant-outline" size={20} color={theme.primary} />
-        <Text style={styles.restaurantName}>{order.restaurant.name}</Text>
-      </View>
-
-      {/* Items del pedido */}
-      <View style={styles.itemsSection}>
-        <Text style={styles.itemsTitle}>
-          {order.items.length} producto{order.items.length !== 1 ? "s" : ""}:
-        </Text>
-        {order.items.slice(0, 2).map((item, index) => (
-          <Text key={index} style={styles.itemText}>
-            • {item.quantity}x {item.product.name}
+        {/* Items del pedido */}
+        <View style={styles.itemsSection}>
+          <Text style={styles.itemsTitle}>
+            {order.items.length} producto{order.items.length !== 1 ? "s" : ""}:
           </Text>
-        ))}
-        {order.items.length > 2 && (
-          <Text style={styles.moreItems}>
-            +{order.items.length - 2} producto
-            {order.items.length - 2 !== 1 ? "s" : ""} más
-          </Text>
-        )}
-      </View>
-
-      {/* Footer */}
-      <View style={styles.orderFooter}>
-        <Text style={styles.totalAmount}>{formatPrice(order.total)}</Text>
-        <View style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Ver Detalles</Text>
-          <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+          {order.items.slice(0, 2).map((item, index) => (
+            <Text key={index} style={styles.itemText}>
+              • {item.quantity || 0}x{" "}
+              {item.product?.name || "Producto no disponible"}
+            </Text>
+          ))}
+          {order.items.length > 2 && (
+            <Text style={styles.moreItems}>
+              +{order.items.length - 2} producto
+              {order.items.length - 2 !== 1 ? "s" : ""} más
+            </Text>
+          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+
+        {/* Footer */}
+        <View style={styles.orderFooter}>
+          <Text style={styles.totalAmount}>
+            {formatPrice((order.total || 0) + 1500)}
+          </Text>
+          <View style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Ver Detalles</Text>
+            <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -213,15 +239,20 @@ const OrdersScreen = ({ navigation }) => {
       </View>
 
       {/* Filtros */}
-      {renderFilters()}
+      {!loading && renderFilters()}
 
       {/* Lista de pedidos */}
       <View style={styles.content}>
-        {getFilteredOrders().length > 0 ? (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+            <Text style={styles.loadingText}>Cargando pedidos...</Text>
+          </View>
+        ) : getFilteredOrders().length > 0 ? (
           <FlatList
-            data={getFilteredOrders()}
+            data={getFilteredOrders().filter((order) => order && order.items)} // Filtrar órdenes inválidas
             renderItem={renderOrderCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item?.id || Math.random().toString()}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -273,47 +304,65 @@ const createStyles = (theme) =>
       color: theme.text,
       textAlign: "center",
     },
-    scrollContainer: {
-      flex: 1,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    loadingText: {
-      fontSize: 16,
+    headerSubtitle: {
+      fontSize: 14,
       color: theme.textSecondary,
-      marginTop: 10,
+      textAlign: "center",
+      marginTop: 4,
     },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: "center",
+
+    // 🆕 Estilos para filtros mejorados
+    filtersContainer: {
+      backgroundColor: theme.cardBackground,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    filtersScroll: {
+      paddingHorizontal: 20,
+      gap: 12,
+    },
+    filterItem: {
+      flexDirection: "row",
       alignItems: "center",
-      padding: 20,
-      minHeight: 400,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.border,
+      gap: 6,
     },
-    emptyTitle: {
-      fontSize: 24,
-      fontWeight: "bold",
+    filterItemActive: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    filterText: {
+      fontSize: 14,
+      fontWeight: "500",
       color: theme.text,
-      marginTop: 20,
-      marginBottom: 10,
-      textAlign: "center",
     },
-    emptySubtitle: {
-      fontSize: 16,
-      color: theme.textSecondary,
-      textAlign: "center",
-      lineHeight: 22,
+    filterTextActive: {
+      color: theme.cardBackground,
     },
-    ordersContainer: {
+
+    // Lista y contenido
+    content: {
+      flex: 1,
+    },
+    listContainer: {
       padding: 20,
     },
+    emptyScrollContainer: {
+      flexGrow: 1,
+      justifyContent: "center",
+    },
+
+    // Cards de pedidos
     orderCard: {
       backgroundColor: theme.cardBackground,
-      borderRadius: 12,
-      padding: 16,
+      borderRadius: 16,
+      padding: 20,
       marginBottom: 16,
       shadowColor: theme.shadow,
       shadowOffset: { width: 0, height: 2 },
@@ -325,7 +374,7 @@ const createStyles = (theme) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-start",
-      marginBottom: 12,
+      marginBottom: 16,
     },
     orderInfo: {
       flex: 1,
@@ -341,87 +390,100 @@ const createStyles = (theme) =>
       color: theme.textSecondary,
     },
     statusBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
       borderRadius: 12,
     },
     statusText: {
-      color: "white",
       fontSize: 12,
       fontWeight: "600",
-      marginLeft: 4,
     },
-    restaurantInfo: {
+    restaurantSection: {
       flexDirection: "row",
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: 16,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
     },
     restaurantName: {
       fontSize: 16,
       fontWeight: "600",
       color: theme.text,
-      marginLeft: 6,
+      marginLeft: 8,
     },
-    orderDetails: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 12,
-    },
-    itemsCount: {
-      fontSize: 14,
-      color: theme.textSecondary,
-    },
-    orderTotal: {
-      fontSize: 18,
-      fontWeight: "bold",
-      color: theme.primary,
-    },
-    itemsList: {
+    itemsSection: {
       marginBottom: 16,
+    },
+    itemsTitle: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: theme.text,
+      marginBottom: 8,
     },
     itemText: {
       fontSize: 14,
-      color: theme.text,
-      marginBottom: 2,
+      color: theme.textSecondary,
+      marginBottom: 4,
     },
-    moreItemsText: {
+    moreItems: {
       fontSize: 14,
       color: theme.textSecondary,
       fontStyle: "italic",
     },
-    orderActions: {
+    orderFooter: {
       flexDirection: "row",
       justifyContent: "space-between",
-    },
-    detailsButton: {
-      flex: 1,
-      backgroundColor: theme.background,
-      borderWidth: 1,
-      borderColor: theme.primary,
-      borderRadius: 8,
-      paddingVertical: 10,
-      marginRight: 8,
       alignItems: "center",
     },
-    detailsButtonText: {
+    totalAmount: {
+      fontSize: 20,
+      fontWeight: "bold",
       color: theme.primary,
+    },
+    actionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    actionButtonText: {
       fontSize: 14,
       fontWeight: "600",
+      color: theme.primary,
     },
-    cancelButton: {
+
+    // Estado vacío
+    emptyContainer: {
       flex: 1,
-      backgroundColor: theme.danger,
-      borderRadius: 8,
-      paddingVertical: 10,
-      marginLeft: 8,
+      justifyContent: "center",
       alignItems: "center",
+      padding: 40,
+      minHeight: 400,
     },
-    cancelButtonText: {
-      color: "white",
-      fontSize: 14,
+    emptyTitle: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: theme.text,
+      marginTop: 20,
+      marginBottom: 12,
+      textAlign: "center",
+    },
+    emptyText: {
+      fontSize: 16,
+      color: theme.textSecondary,
+      textAlign: "center",
+      lineHeight: 22,
+      marginBottom: 30,
+    },
+    startShoppingButton: {
+      backgroundColor: theme.primary,
+      borderRadius: 12,
+      paddingVertical: 14,
+      paddingHorizontal: 30,
+    },
+    startShoppingText: {
+      color: theme.cardBackground,
+      fontSize: 16,
       fontWeight: "600",
     },
   });

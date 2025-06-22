@@ -1,141 +1,83 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Crear el contexto
 const OrderContext = createContext();
 
-// Tipos de acciones
-const OrderActionTypes = {
-  LOAD_ORDERS: "LOAD_ORDERS",
-  ADD_ORDER: "ADD_ORDER",
-  UPDATE_ORDER_STATUS: "UPDATE_ORDER_STATUS",
-  CLEAR_ORDERS: "CLEAR_ORDERS",
-};
-
-// Estado inicial
-const initialState = {
-  orders: [],
-  loading: false,
-};
-
-// Reducer
-const orderReducer = (state, action) => {
-  switch (action.type) {
-    case OrderActionTypes.LOAD_ORDERS:
-      return {
-        ...state,
-        orders: action.payload,
-        loading: false,
-      };
-
-    case OrderActionTypes.ADD_ORDER: {
-      const newOrders = [action.payload, ...state.orders];
-      return {
-        ...state,
-        orders: newOrders,
-      };
-    }
-
-    case OrderActionTypes.UPDATE_ORDER_STATUS: {
-      const { orderId, status } = action.payload;
-      const updatedOrders = state.orders.map((order) =>
-        order.id === orderId
-          ? { ...order, status, updatedAt: new Date().toISOString() }
-          : order
-      );
-      return {
-        ...state,
-        orders: updatedOrders,
-      };
-    }
-
-    case OrderActionTypes.CLEAR_ORDERS:
-      return {
-        ...state,
-        orders: [],
-      };
-
-    default:
-      return state;
-  }
-};
-
-// Proveedor del contexto
 export const OrderProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(orderReducer, initialState);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Cargar pedidos desde AsyncStorage al inicializar
+  // 🆕 Cargar pedidos desde AsyncStorage al inicializar
   useEffect(() => {
     loadOrdersFromStorage();
   }, []);
 
-  // Guardar pedidos en AsyncStorage cuando cambien
+  // 🆕 Guardar pedidos en AsyncStorage cuando cambien
   useEffect(() => {
-    if (state.orders.length > 0) {
-      saveOrdersToStorage(state.orders);
+    if (!loading) {
+      saveOrdersToStorage(orders);
     }
-  }, [state.orders]);
+  }, [orders, loading]);
 
   const loadOrdersFromStorage = async () => {
     try {
       const ordersData = await AsyncStorage.getItem("@orders");
       if (ordersData) {
         const parsedOrders = JSON.parse(ordersData);
-        dispatch({ type: OrderActionTypes.LOAD_ORDERS, payload: parsedOrders });
+        console.log("📂 Loaded orders from storage:", parsedOrders.length);
+        setOrders(parsedOrders);
       } else {
-        dispatch({ type: OrderActionTypes.LOAD_ORDERS, payload: [] });
+        console.log("📂 No orders found in storage");
+        setOrders([]);
       }
     } catch (error) {
-      console.error("Error loading orders from storage:", error);
-      dispatch({ type: OrderActionTypes.LOAD_ORDERS, payload: [] });
+      console.error("❌ Error loading orders:", error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const saveOrdersToStorage = async (orders) => {
+  const saveOrdersToStorage = async (ordersToSave) => {
     try {
-      await AsyncStorage.setItem("@orders", JSON.stringify(orders));
+      await AsyncStorage.setItem("@orders", JSON.stringify(ordersToSave));
+      console.log("💾 Orders saved to storage:", ordersToSave.length);
     } catch (error) {
-      console.error("Error saving orders to storage:", error);
+      console.error("❌ Error saving orders:", error);
     }
   };
 
-  // Acciones de pedidos
-  const addOrder = (order) => {
-    console.log("📦 Adding new order:", order);
-    dispatch({
-      type: OrderActionTypes.ADD_ORDER,
-      payload: order,
-    });
+  const addOrder = (orderData) => {
+    const newOrder = {
+      id: `order_${Date.now()}`,
+      ...orderData,
+      orderDate: new Date().toISOString(),
+      status: "pending",
+    };
+
+    console.log("✅ Adding new order:", newOrder.id);
+    setOrders((prevOrders) => [newOrder, ...prevOrders]);
+    return newOrder.id;
   };
 
-  const updateOrderStatus = (orderId, status) => {
-    dispatch({
-      type: OrderActionTypes.UPDATE_ORDER_STATUS,
-      payload: { orderId, status },
-    });
-  };
-
-  const clearOrders = () => {
-    dispatch({ type: OrderActionTypes.CLEAR_ORDERS });
+  const updateOrderStatus = (orderId, newStatus) => {
+    console.log(`🔄 Updating order ${orderId} to status: ${newStatus}`);
+    setOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId
+          ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+          : order
+      )
+    );
   };
 
   const getOrderById = (orderId) => {
-    return state.orders.find((order) => order.id === orderId);
+    return orders.find((order) => order.id === orderId);
   };
 
-  const getOrdersByStatus = (status) => {
-    return state.orders.filter((order) => order.status === status);
-  };
-
-  const getRecentOrders = (limit = 5) => {
-    return state.orders
-      .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
-      .slice(0, limit);
-  };
-
-  // Función helper para obtener el estado en español
   const getStatusText = (status) => {
     const statusMap = {
+      pending: "Pendiente",
       confirmed: "Confirmado",
       preparing: "En Preparación",
       ready: "Listo",
@@ -145,36 +87,46 @@ export const OrderProvider = ({ children }) => {
     return statusMap[status] || "Desconocido";
   };
 
-  // Función helper para obtener el color del estado
   const getStatusColor = (status, theme) => {
     const colorMap = {
-      confirmed: theme.warning,
-      preparing: theme.primary,
-      ready: theme.success,
-      delivered: theme.success,
-      cancelled: theme.danger,
+      pending: "#f59e0b",
+      confirmed: "#3b82f6",
+      preparing: "#f59e0b",
+      ready: "#10b981",
+      delivered: "#10b981",
+      cancelled: "#ef4444",
     };
-    return colorMap[status] || theme.textSecondary;
+    return colorMap[status] || "#6b7280";
   };
 
-  const value = {
-    ...state,
-    addOrder,
-    updateOrderStatus,
-    clearOrders,
-    getOrderById,
-    getOrdersByStatus,
-    getRecentOrders,
-    getStatusText,
-    getStatusColor,
+  const clearAllOrders = async () => {
+    try {
+      await AsyncStorage.removeItem("@orders");
+      setOrders([]);
+      console.log("🗑️ All orders cleared");
+    } catch (error) {
+      console.error("❌ Error clearing orders:", error);
+    }
   };
 
   return (
-    <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
+    <OrderContext.Provider
+      value={{
+        orders,
+        loading,
+        addOrder,
+        updateOrderStatus,
+        getStatusText,
+        getStatusColor,
+        getOrderById,
+        clearAllOrders,
+      }}
+    >
+      {children}
+    </OrderContext.Provider>
   );
 };
 
-// Hook personalizado para usar el contexto
 export const useOrders = () => {
   const context = useContext(OrderContext);
   if (!context) {

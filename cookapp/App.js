@@ -11,7 +11,7 @@ import MainTabNavigator from "./src/screens/MainTabNavigator";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { FavoritesProvider } from "./src/context/FavoritesContext";
 import { CartProvider } from "./src/context/CartContext";
-import { OrderProvider } from "./src/context/OrderContext"; // 🆕 AGREGAR ESTA LÍNEA
+import { OrderProvider } from "./src/context/OrderContext";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -87,7 +87,6 @@ export default function App() {
       <FavoritesProvider>
         <CartProvider>
           <OrderProvider>
-            {" "}
             <NavigationContainer>
               {currentScreen === "loading" && (
                 <View style={styles.loadingContainer}>
@@ -113,7 +112,7 @@ export default function App() {
                 <MainTabNavigator user={user} onLogout={handleLogout} />
               )}
             </NavigationContainer>
-          </OrderProvider>{" "}
+          </OrderProvider>
         </CartProvider>
       </FavoritesProvider>
     </ThemeProvider>
