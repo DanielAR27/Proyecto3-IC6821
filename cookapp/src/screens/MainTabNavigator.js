@@ -48,8 +48,9 @@ const HomeStackNavigator = ({ user, ...navigationProps }) => {
       <HomeStack.Screen name="Restaurant" component={RestaurantScreen} />
       <HomeStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <HomeStack.Screen name="Cart" component={CartScreen} />
-      {/* 🆕 AGREGAR ESTA LÍNEA: */}
-      <HomeStack.Screen name="Checkout" component={CheckoutScreen} />
+      <HomeStack.Screen name="Checkout">
+        {(screenProps) => <CheckoutScreen {...screenProps} user={user} />}
+      </HomeStack.Screen>
     </HomeStack.Navigator>
   );
 };

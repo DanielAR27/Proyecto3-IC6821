@@ -1,35 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../context/ThemeContext";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrderContext";
 
-const CheckoutScreen = ({ navigation }) => {
+const CheckoutScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { items, total, restaurant, clearCart } = useCart();
   const { addOrder } = useOrders();
+
+  // Usuario desde parámetros de navegación o AsyncStorage
+  const [currentUser, setCurrentUser] = useState(route?.params?.user || null);
 
   // Estados para el flujo de checkout
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [orderId, setOrderId] = useState(null);
 
-  // Estados para los datos del usuario
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [specialInstructions, setSpecialInstructions] = useState("");
+  // Estados para los datos cargados del perfil
+  const [addresses, setAddresses] = useState([]);
+  const [cards, setCards] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Animación para el check
   const [checkScale] = useState(new Animated.Value(0));
@@ -39,6 +44,84 @@ const CheckoutScreen = ({ navigation }) => {
   const deliveryFee = 1500;
   const finalTotal = total + deliveryFee;
 
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true);
+
+      // Si no viene usuario en params, cargar desde AsyncStorage
+      let userToUse = currentUser;
+      if (!userToUse) {
+        const userData = await AsyncStorage.getItem("@user");
+        if (userData) {
+          userToUse = JSON.parse(userData);
+          setCurrentUser(userToUse);
+        } else {
+          Alert.alert(
+            "Error",
+            "No se encontró información del usuario. Por favor inicia sesión nuevamente."
+          );
+          navigation.goBack();
+          return;
+        }
+      }
+
+      // Cargar direcciones
+      const savedAddresses = await AsyncStorage.getItem(
+        `@addresses_${userToUse._id}`
+      );
+      if (savedAddresses) {
+        const addressList = JSON.parse(savedAddresses);
+        setAddresses(addressList);
+        // Seleccionar la dirección por defecto
+        const defaultAddress = addressList.find((addr) => addr.is_default);
+        setSelectedAddress(defaultAddress || addressList[0]);
+      }
+
+      // Cargar tarjetas
+      const savedCards = await AsyncStorage.getItem(`@cards_${userToUse._id}`);
+      if (savedCards) {
+        const cardList = JSON.parse(savedCards);
+        setCards(cardList);
+        // Seleccionar la tarjeta por defecto
+        const defaultCard = cardList.find((card) => card.isDefault);
+        if (defaultCard) {
+          setSelectedPaymentMethod({ type: "card", data: defaultCard });
+        }
+      }
+
+      // Cargar balance de billetera
+      const savedBalance = await AsyncStorage.getItem(
+        `@balance_${userToUse._id}`
+      );
+      if (savedBalance) {
+        const userBalance = parseFloat(savedBalance);
+        setBalance(userBalance);
+
+        // Si no hay tarjeta por defecto pero hay saldo, usar billetera
+        if (!selectedPaymentMethod && userBalance >= finalTotal) {
+          setSelectedPaymentMethod({
+            type: "wallet",
+            data: { balance: userBalance },
+          });
+        }
+      }
+
+      // Si no hay métodos de pago, usar efectivo por defecto
+      if (!selectedPaymentMethod) {
+        setSelectedPaymentMethod({ type: "cash", data: {} });
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      Alert.alert("Error", "No se pudieron cargar los datos del perfil");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatPrice = (price) => {
     return `₡${parseFloat(price).toLocaleString("es-CR", {
       minimumFractionDigits: 2,
@@ -46,20 +129,63 @@ const CheckoutScreen = ({ navigation }) => {
     })}`;
   };
 
-  const validateForm = () => {
-    if (!deliveryAddress.trim()) {
-      Alert.alert("Error", "Por favor ingresa la dirección de entrega");
+  const validateOrder = () => {
+    if (!selectedAddress) {
+      Alert.alert(
+        "Dirección requerida",
+        "Por favor selecciona una dirección de entrega",
+        [
+          {
+            text: "Ir a Direcciones",
+            onPress: () =>
+              navigation.navigate("Profile", { screen: "AddressManagement" }),
+          },
+          { text: "Cancelar", style: "cancel" },
+        ]
+      );
       return false;
     }
-    if (!phoneNumber.trim()) {
-      Alert.alert("Error", "Por favor ingresa tu número de teléfono");
+
+    if (!selectedPaymentMethod) {
+      Alert.alert(
+        "Método de pago requerido",
+        "Por favor selecciona un método de pago",
+        [
+          {
+            text: "Ir a Métodos de Pago",
+            onPress: () =>
+              navigation.navigate("Profile", { screen: "PaymentMethods" }),
+          },
+          { text: "Cancelar", style: "cancel" },
+        ]
+      );
       return false;
     }
+
+    // Verificar saldo si usa billetera
+    if (selectedPaymentMethod.type === "wallet" && balance < finalTotal) {
+      Alert.alert(
+        "Saldo insuficiente",
+        `Tu saldo actual es ${formatPrice(balance)}. Necesitas ${formatPrice(
+          finalTotal - balance
+        )} más.`,
+        [
+          {
+            text: "Recargar Saldo",
+            onPress: () =>
+              navigation.navigate("Profile", { screen: "PaymentMethods" }),
+          },
+          { text: "Cambiar Método", style: "cancel" },
+        ]
+      );
+      return false;
+    }
+
     return true;
   };
 
   const handlePlaceOrder = async () => {
-    if (!validateForm()) return;
+    if (!validateOrder()) return;
 
     // 1. Mostrar "Procesando..."
     setIsProcessing(true);
@@ -68,15 +194,24 @@ const CheckoutScreen = ({ navigation }) => {
       // Simular procesamiento de pago (2 segundos)
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // 2. Crear la orden
+      // 2. Si usa billetera, descontar del saldo
+      if (selectedPaymentMethod.type === "wallet") {
+        const newBalance = balance - finalTotal;
+        await AsyncStorage.setItem(
+          `@balance_${currentUser._id}`,
+          newBalance.toString()
+        );
+        setBalance(newBalance);
+      }
+
+      // 3. Crear la orden
       const orderData = {
         items,
         restaurant,
         total: finalTotal,
-        deliveryAddress,
-        phoneNumber,
-        paymentMethod,
-        specialInstructions,
+        deliveryAddress: selectedAddress,
+        phoneNumber: currentUser.phone || "No especificado",
+        paymentMethod: selectedPaymentMethod,
         estimatedDeliveryTime: new Date(
           Date.now() + 30 * 60 * 1000
         ).toISOString(),
@@ -85,11 +220,11 @@ const CheckoutScreen = ({ navigation }) => {
       const newOrderId = addOrder(orderData);
       setOrderId(newOrderId);
 
-      // 3. Mostrar pantalla de éxito
+      // 4. Mostrar pantalla de éxito
       setIsProcessing(false);
       setShowSuccess(true);
 
-      // 4. Animar el check
+      // 5. Animar el check
       Animated.spring(checkScale, {
         toValue: 1,
         tension: 100,
@@ -97,7 +232,7 @@ const CheckoutScreen = ({ navigation }) => {
         useNativeDriver: true,
       }).start();
 
-      // 5. Limpiar carrito después de 1 segundo
+      // 6. Limpiar carrito después de 1 segundo
       setTimeout(() => {
         clearCart();
       }, 1000);
@@ -112,37 +247,42 @@ const CheckoutScreen = ({ navigation }) => {
 
   const handleBackToHome = () => {
     setShowSuccess(false);
-    // Resetear completamente el stack de navegación
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: "Home",
-          state: {
-            routes: [{ name: "HomeMain" }],
-          },
-        },
-      ],
-    });
+    navigation.navigate("Home");
   };
 
   const handleViewOrder = () => {
     setShowSuccess(false);
-    // Resetear el stack y ir directo a Orders con el pedido específico
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: "Orders",
-          state: {
-            routes: [
-              { name: "OrdersMain" },
-              { name: "OrderDetail", params: { orderId } },
-            ],
-          },
-        },
-      ],
-    });
+    navigation.navigate("Orders");
+  };
+
+  const getPaymentMethodDisplay = (method) => {
+    if (!method) return "Seleccionar método";
+
+    switch (method.type) {
+      case "card":
+        return `${method.data.brand} •••• ${method.data.last4}`;
+      case "wallet":
+        return `Billetera (${formatPrice(balance)})`;
+      case "cash":
+        return "Efectivo";
+      default:
+        return "Método desconocido";
+    }
+  };
+
+  const getPaymentMethodIcon = (method) => {
+    if (!method) return "card-outline";
+
+    switch (method.type) {
+      case "card":
+        return "card";
+      case "wallet":
+        return "wallet";
+      case "cash":
+        return "cash";
+      default:
+        return "card-outline";
+    }
   };
 
   // 🎉 Pantalla de éxito
@@ -243,7 +383,16 @@ const CheckoutScreen = ({ navigation }) => {
     );
   }
 
-  // 📝 Formulario de checkout original
+  // 📝 Pantalla de checkout principal
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={styles.loadingText}>Cargando datos del perfil...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -291,81 +440,167 @@ const CheckoutScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Información de entrega */}
+        {/* Dirección de entrega */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información de Entrega</Text>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Dirección de entrega *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={deliveryAddress}
-              onChangeText={setDeliveryAddress}
-              placeholder="Ingresa tu dirección completa"
-              placeholderTextColor={theme.textSecondary}
-              multiline
-            />
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Dirección de Entrega</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Profile", { screen: "AddressManagement" })
+              }
+            >
+              <Ionicons name="add-circle" size={24} color={theme.primary} />
+            </TouchableOpacity>
           </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Teléfono *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              placeholder="Ej: 8888-8888"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="phone-pad"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>Instrucciones especiales</Text>
-            <TextInput
-              style={[styles.textInput, styles.textAreaInput]}
-              value={specialInstructions}
-              onChangeText={setSpecialInstructions}
-              placeholder="Ej: Casa azul, tocar el timbre..."
-              placeholderTextColor={theme.textSecondary}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
+
+          {addresses.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons
+                name="location-outline"
+                size={32}
+                color={theme.textSecondary}
+              />
+              <Text style={styles.emptyStateText}>
+                No tienes direcciones guardadas
+              </Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() =>
+                  navigation.navigate("Profile", {
+                    screen: "AddressManagement",
+                  })
+                }
+              >
+                <Text style={styles.addButtonText}>Agregar Dirección</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {addresses.map((address) => (
+                <TouchableOpacity
+                  key={address.id}
+                  style={[
+                    styles.addressCard,
+                    selectedAddress?.id === address.id && styles.selectedCard,
+                  ]}
+                  onPress={() => setSelectedAddress(address)}
+                >
+                  <View style={styles.addressHeader}>
+                    <Ionicons name="location" size={20} color={theme.primary} />
+                    <Text style={styles.addressName}>{address.name}</Text>
+                    {address.is_default && (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultText}>Principal</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.addressText}>{address.street}</Text>
+                  <Text style={styles.addressText}>
+                    {address.city}, {address.province}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Método de pago */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Método de Pago</Text>
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              paymentMethod === "card" && styles.paymentOptionSelected,
-            ]}
-            onPress={() => setPaymentMethod("card")}
-          >
-            <Ionicons name="card-outline" size={24} color={theme.primary} />
-            <Text style={styles.paymentOptionText}>
-              Tarjeta de Crédito/Débito
-            </Text>
-            <Ionicons
-              name={
-                paymentMethod === "card"
-                  ? "radio-button-on"
-                  : "radio-button-off"
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Método de Pago</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Profile", { screen: "PaymentMethods" })
               }
-              size={24}
-              color={theme.primary}
-            />
-          </TouchableOpacity>
+            >
+              <Ionicons name="add-circle" size={24} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Billetera */}
+          {balance > 0 && (
+            <TouchableOpacity
+              style={[
+                styles.paymentOption,
+                selectedPaymentMethod?.type === "wallet" &&
+                  styles.selectedPaymentOption,
+              ]}
+              onPress={() =>
+                setSelectedPaymentMethod({ type: "wallet", data: { balance } })
+              }
+            >
+              <Ionicons name="wallet" size={24} color={theme.primary} />
+              <View style={styles.paymentOptionContent}>
+                <Text style={styles.paymentOptionTitle}>Mi Billetera</Text>
+                <Text style={styles.paymentOptionSubtitle}>
+                  {formatPrice(balance)} disponible
+                </Text>
+              </View>
+              <Ionicons
+                name={
+                  selectedPaymentMethod?.type === "wallet"
+                    ? "radio-button-on"
+                    : "radio-button-off"
+                }
+                size={24}
+                color={theme.primary}
+              />
+            </TouchableOpacity>
+          )}
+
+          {/* Tarjetas */}
+          {cards.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={[
+                styles.paymentOption,
+                selectedPaymentMethod?.type === "card" &&
+                  selectedPaymentMethod?.data?.id === card.id &&
+                  styles.selectedPaymentOption,
+              ]}
+              onPress={() =>
+                setSelectedPaymentMethod({ type: "card", data: card })
+              }
+            >
+              <Ionicons name="card" size={24} color={theme.primary} />
+              <View style={styles.paymentOptionContent}>
+                <Text style={styles.paymentOptionTitle}>
+                  {card.brand} •••• {card.last4}
+                </Text>
+                <Text style={styles.paymentOptionSubtitle}>
+                  Vence {card.expiry}
+                </Text>
+              </View>
+              <Ionicons
+                name={
+                  selectedPaymentMethod?.type === "card" &&
+                  selectedPaymentMethod?.data?.id === card.id
+                    ? "radio-button-on"
+                    : "radio-button-off"
+                }
+                size={24}
+                color={theme.primary}
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Efectivo */}
           <TouchableOpacity
             style={[
               styles.paymentOption,
-              paymentMethod === "cash" && styles.paymentOptionSelected,
+              selectedPaymentMethod?.type === "cash" &&
+                styles.selectedPaymentOption,
             ]}
-            onPress={() => setPaymentMethod("cash")}
+            onPress={() => setSelectedPaymentMethod({ type: "cash", data: {} })}
           >
-            <Ionicons name="cash-outline" size={24} color={theme.primary} />
-            <Text style={styles.paymentOptionText}>Efectivo</Text>
+            <Ionicons name="cash" size={24} color={theme.primary} />
+            <View style={styles.paymentOptionContent}>
+              <Text style={styles.paymentOptionTitle}>Efectivo</Text>
+              <Text style={styles.paymentOptionSubtitle}>Pagar al recibir</Text>
+            </View>
             <Ionicons
               name={
-                paymentMethod === "cash"
+                selectedPaymentMethod?.type === "cash"
                   ? "radio-button-on"
                   : "radio-button-off"
               }
@@ -416,6 +651,19 @@ const createStyles = (theme) =>
     content: {
       flex: 1,
     },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.background,
+    },
+    loadingText: {
+      fontSize: 16,
+      color: theme.textSecondary,
+      marginTop: 16,
+    },
+
+    // Secciones
     section: {
       backgroundColor: theme.cardBackground,
       margin: 20,
@@ -428,11 +676,16 @@ const createStyles = (theme) =>
       shadowRadius: 4,
       elevation: 3,
     },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
     sectionTitle: {
       fontSize: 18,
       fontWeight: "bold",
       color: theme.text,
-      marginBottom: 16,
     },
 
     // Resumen del pedido
@@ -496,28 +749,70 @@ const createStyles = (theme) =>
       color: theme.primary,
     },
 
-    // Formulario
-    inputContainer: {
+    // Estados vacíos
+    emptyState: {
+      alignItems: "center",
+      padding: 20,
+    },
+    emptyStateText: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginTop: 8,
       marginBottom: 16,
     },
-    inputLabel: {
+    addButton: {
+      backgroundColor: theme.primary,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      borderRadius: 20,
+    },
+    addButtonText: {
+      color: "white",
       fontSize: 14,
       fontWeight: "600",
-      color: theme.text,
+    },
+
+    // Direcciones
+    addressCard: {
+      backgroundColor: theme.background,
+      borderRadius: 12,
+      padding: 16,
+      marginRight: 12,
+      minWidth: 200,
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    selectedCard: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + "10",
+    },
+    addressHeader: {
+      flexDirection: "row",
+      alignItems: "center",
       marginBottom: 8,
     },
-    textInput: {
-      borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: 8,
-      padding: 12,
+    addressName: {
       fontSize: 16,
+      fontWeight: "600",
       color: theme.text,
-      backgroundColor: theme.background,
+      marginLeft: 8,
+      flex: 1,
     },
-    textAreaInput: {
-      height: 80,
-      textAlignVertical: "top",
+    defaultBadge: {
+      backgroundColor: theme.primary,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 8,
+    },
+    defaultText: {
+      color: "white",
+      fontSize: 10,
+      fontWeight: "600",
+    },
+    addressText: {
+      fontSize: 12,
+      color: theme.textSecondary,
+      marginBottom: 2,
     },
 
     // Métodos de pago
@@ -531,14 +826,22 @@ const createStyles = (theme) =>
       marginBottom: 12,
       gap: 12,
     },
-    paymentOptionSelected: {
+    selectedPaymentOption: {
       borderColor: theme.primary,
       backgroundColor: theme.primary + "10",
     },
-    paymentOptionText: {
+    paymentOptionContent: {
       flex: 1,
+    },
+    paymentOptionTitle: {
       fontSize: 16,
+      fontWeight: "600",
       color: theme.text,
+    },
+    paymentOptionSubtitle: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginTop: 2,
     },
 
     // Footer
