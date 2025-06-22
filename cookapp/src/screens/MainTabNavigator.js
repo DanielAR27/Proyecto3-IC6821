@@ -30,6 +30,10 @@ import CustomTabBar from "../components/CustomTabBar";
 import CartScreen from "./cart/CartScreen";
 import CheckoutScreen from "./checkout/CheckoutScreen";
 import OrderDetailScreen from "./orders/OrderDetailScreen";
+// 🆕 Import para pedidos recurrentes
+import RecurringOrdersScreen from "./orders/RecurringOrdersScreen";
+// 🆕 Import para editar pedidos recurrentes
+import EditRecurringOrderScreen from "./orders/EditRecurringOrderScreen";
 
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
@@ -38,7 +42,6 @@ const HomeStack = createStackNavigator();
 const OrdersStack = createStackNavigator();
 
 // Stack Navigator para Home (incluye RestaurantScreen)
-
 const HomeStackNavigator = ({ user, ...navigationProps }) => {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
@@ -129,6 +132,7 @@ const AdminStackNavigator = ({ user }) => {
     </AdminStack.Navigator>
   );
 };
+
 const ProfileStackNavigator = ({ user, onLogout }) => {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
@@ -154,15 +158,36 @@ const ProfileStackNavigator = ({ user, onLogout }) => {
           />
         )}
       </ProfileStack.Screen>
+      {/* 🆕 Agregar pantalla de pedidos recurrentes al ProfileStack */}
+      <ProfileStack.Screen
+        name="RecurringOrders"
+        component={RecurringOrdersScreen}
+      />
+      {/* 🆕 Agregar pantalla de edición de pedidos recurrentes */}
+      <ProfileStack.Screen
+        name="EditRecurringOrder"
+        component={EditRecurringOrderScreen}
+      />
     </ProfileStack.Navigator>
   );
 };
 
+// 🆕 OrdersStack actualizado con pedidos recurrentes
 const OrdersStackNavigator = () => {
   return (
     <OrdersStack.Navigator screenOptions={{ headerShown: false }}>
       <OrdersStack.Screen name="OrdersMain" component={OrdersScreen} />
       <OrdersStack.Screen name="OrderDetail" component={OrderDetailScreen} />
+      {/* 🆕 También disponible desde Orders */}
+      <OrdersStack.Screen
+        name="RecurringOrders"
+        component={RecurringOrdersScreen}
+      />
+      {/* 🆕 Pantalla de edición también en OrdersStack */}
+      <OrdersStack.Screen
+        name="EditRecurringOrder"
+        component={EditRecurringOrderScreen}
+      />
     </OrdersStack.Navigator>
   );
 };

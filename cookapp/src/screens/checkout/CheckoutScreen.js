@@ -14,11 +14,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../context/ThemeContext";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrderContext";
+// 🆕 Importar el contexto de pedidos recurrentes
+import { useRecurringOrders } from "../../context/RecurringOrderContext";
+// 🆕 Importar el componente de configuración
+import RecurringOrderSetup from "../../components/RecurringOrderSetup";
 
 const CheckoutScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
   const { items, total, restaurant, clearCart } = useCart();
   const { addOrder } = useOrders();
+  // 🆕 Hook para pedidos recurrentes
+  const { createRecurringOrder } = useRecurringOrders();
 
   // Usuario desde parámetros de navegación o AsyncStorage
   const [currentUser, setCurrentUser] = useState(route?.params?.user || null);
@@ -35,6 +41,11 @@ const CheckoutScreen = ({ navigation, route }) => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // 🆕 Estados para pedidos recurrentes
+  const [isRecurringEnabled, setIsRecurringEnabled] = useState(false);
+  const [recurringConfig, setRecurringConfig] = useState(null);
+  const [showRecurringSetup, setShowRecurringSetup] = useState(false);
 
   // Animación para el check
   const [checkScale] = useState(new Animated.Value(0));
@@ -184,6 +195,45 @@ const CheckoutScreen = ({ navigation, route }) => {
     return true;
   };
 
+  // 🆕 Manejar toggle de pedido recurrente
+  const handleRecurringToggle = (value) => {
+    setIsRecurringEnabled(value);
+    if (value && !recurringConfig) {
+      setShowRecurringSetup(true);
+    }
+  };
+
+  // 🆕 Guardar configuración de pedido recurrente
+  const handleRecurringConfigSave = (config) => {
+    setRecurringConfig(config);
+    console.log("🔄 Recurring config saved:", config);
+  };
+
+  // 🆕 Obtener descripción del pedido recurrente
+  const getRecurringDescription = () => {
+    if (!recurringConfig) return "Configurar repetición";
+
+    const { frequency, hour, minute, days, customDays } = recurringConfig;
+    const time = `${hour.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}`;
+
+    switch (frequency) {
+      case "daily":
+        return `Diario a las ${time}`;
+      case "weekly":
+        const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        const selectedDayNames = days.map((d) => dayNames[d]).join(", ");
+        return `${selectedDayNames} a las ${time}`;
+      case "monthly":
+        return `Mensual a las ${time}`;
+      case "custom":
+        return `Cada ${customDays} días a las ${time}`;
+      default:
+        return "Configurar repetición";
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!validateOrder()) return;
 
@@ -220,11 +270,29 @@ const CheckoutScreen = ({ navigation, route }) => {
       const newOrderId = addOrder(orderData);
       setOrderId(newOrderId);
 
-      // 4. Mostrar pantalla de éxito
+      // 🆕 4. Si está habilitado el pedido recurrente, crearlo
+      if (isRecurringEnabled && recurringConfig) {
+        const recurringOrderId = createRecurringOrder(
+          orderData,
+          recurringConfig
+        );
+        console.log("🔄 Recurring order created:", recurringOrderId);
+
+        // Mostrar confirmación adicional
+        setTimeout(() => {
+          Alert.alert(
+            "¡Pedido recurrente configurado!",
+            "Tu pedido se repetirá automáticamente según la configuración seleccionada. Puedes gestionar tus pedidos recurrentes desde 'Mis Pedidos'.",
+            [{ text: "Entendido" }]
+          );
+        }, 2000);
+      }
+
+      // 5. Mostrar pantalla de éxito
       setIsProcessing(false);
       setShowSuccess(true);
 
-      // 5. Animar el check
+      // 6. Animar el check
       Animated.spring(checkScale, {
         toValue: 1,
         tension: 100,
@@ -232,7 +300,7 @@ const CheckoutScreen = ({ navigation, route }) => {
         useNativeDriver: true,
       }).start();
 
-      // 6. Limpiar carrito después de 1 segundo
+      // 7. Limpiar carrito después de 1 segundo
       setTimeout(() => {
         clearCart();
       }, 1000);
@@ -252,7 +320,16 @@ const CheckoutScreen = ({ navigation, route }) => {
 
   const handleViewOrder = () => {
     setShowSuccess(false);
-    navigation.navigate("Orders");
+    // 🔧 Navegar a OrderDetail y resetear stack para ir al Home al volver
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "HomeMain" }],
+    });
+    // Luego navegar a Orders con el detalle específico
+    navigation.navigate("Orders", {
+      screen: "OrderDetail",
+      params: { orderId: orderId },
+    });
   };
 
   const getPaymentMethodDisplay = (method) => {
@@ -311,6 +388,16 @@ const CheckoutScreen = ({ navigation, route }) => {
           <Text style={styles.estimatedTimeText}>
             🕐 Tiempo estimado: 25-35 minutos
           </Text>
+
+          {/* 🆕 Mostrar info de recurrencia si está configurada */}
+          {isRecurringEnabled && recurringConfig && (
+            <View style={styles.recurringInfo}>
+              <Ionicons name="repeat" size={16} color={theme.primary} />
+              <Text style={styles.recurringInfoText}>
+                Pedido recurrente: {getRecurringDescription()}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.successActions}>
@@ -438,6 +525,66 @@ const CheckoutScreen = ({ navigation, route }) => {
               </View>
             </View>
           </View>
+        </View>
+
+        {/* 🆕 Sección de Pedido Recurrente */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Pedido Recurrente</Text>
+          <TouchableOpacity
+            style={[
+              styles.recurringOption,
+              isRecurringEnabled && styles.recurringOptionEnabled,
+            ]}
+            onPress={() => setShowRecurringSetup(true)}
+          >
+            <View style={styles.recurringOptionContent}>
+              <Ionicons
+                name="repeat"
+                size={24}
+                color={isRecurringEnabled ? theme.primary : theme.textSecondary}
+              />
+              <View style={styles.recurringOptionText}>
+                <Text style={styles.recurringOptionTitle}>
+                  {isRecurringEnabled
+                    ? "Repetir automáticamente"
+                    : "Configurar repetición"}
+                </Text>
+                <Text style={styles.recurringOptionSubtitle}>
+                  {isRecurringEnabled && recurringConfig
+                    ? getRecurringDescription()
+                    : "Programa tu pedido para que se repita automáticamente"}
+                </Text>
+              </View>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={theme.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {isRecurringEnabled && (
+            <View style={styles.recurringBenefits}>
+              <View style={styles.benefitItem}>
+                <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                <Text style={styles.benefitText}>
+                  Sin comisiones adicionales
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                <Text style={styles.benefitText}>
+                  Puedes pausar en cualquier momento
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Ionicons name="checkmark-circle" size={16} color="#10b981" />
+                <Text style={styles.benefitText}>
+                  Mismo método de pago y dirección
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Dirección de entrega */}
@@ -622,6 +769,16 @@ const CheckoutScreen = ({ navigation, route }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* 🆕 Modal de configuración de pedido recurrente */}
+      <RecurringOrderSetup
+        visible={showRecurringSetup}
+        onClose={() => setShowRecurringSetup(false)}
+        onSave={handleRecurringConfigSave}
+        theme={theme}
+        isEnabled={isRecurringEnabled}
+        onToggle={handleRecurringToggle}
+      />
     </View>
   );
 };
@@ -686,6 +843,71 @@ const createStyles = (theme) =>
       fontSize: 18,
       fontWeight: "bold",
       color: theme.text,
+    },
+
+    // 🆕 Estilos para pedidos recurrentes
+    recurringOption: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: 16,
+      backgroundColor: theme.background,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    recurringOptionEnabled: {
+      borderColor: theme.primary,
+      backgroundColor: theme.primary + "10",
+    },
+    recurringOptionContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    recurringOptionText: {
+      marginLeft: 12,
+      flex: 1,
+    },
+    recurringOptionTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    recurringOptionSubtitle: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    recurringBenefits: {
+      marginTop: 12,
+      padding: 12,
+      backgroundColor: theme.background,
+      borderRadius: 8,
+      gap: 8,
+    },
+    benefitItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    benefitText: {
+      fontSize: 13,
+      color: theme.text,
+    },
+    recurringInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 8,
+      padding: 8,
+      backgroundColor: theme.primary + "10",
+      borderRadius: 6,
+    },
+    recurringInfoText: {
+      fontSize: 12,
+      color: theme.primary,
+      fontWeight: "500",
     },
 
     // Resumen del pedido
