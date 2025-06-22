@@ -110,12 +110,7 @@ const CartScreen = ({ navigation }) => {
   };
 
   const handleCheckout = () => {
-    // Aquí implementarías la lógica de checkout
-    Alert.alert(
-      "Proceder al pago",
-      "Esta funcionalidad se implementará próximamente",
-      [{ text: "OK" }]
-    );
+    navigation.navigate("Checkout");
   };
 
   const formatPrice = (price) => {

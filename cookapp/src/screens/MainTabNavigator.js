@@ -28,6 +28,7 @@ import AddressManagementScreen from "./profile/AddressManagementScreen";
 import PaymentMethodsScreen from "./profile/PaymentMethodsScreen";
 import CustomTabBar from "../components/CustomTabBar";
 import CartScreen from "./cart/CartScreen";
+import CheckoutScreen from "./checkout/CheckoutScreen";
 
 const Tab = createBottomTabNavigator();
 const AdminStack = createStackNavigator();
@@ -45,6 +46,8 @@ const HomeStackNavigator = ({ user, ...navigationProps }) => {
       <HomeStack.Screen name="Restaurant" component={RestaurantScreen} />
       <HomeStack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <HomeStack.Screen name="Cart" component={CartScreen} />
+      {/* 🆕 AGREGAR ESTA LÍNEA: */}
+      <HomeStack.Screen name="Checkout" component={CheckoutScreen} />
     </HomeStack.Navigator>
   );
 };

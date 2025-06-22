@@ -11,6 +11,7 @@ import MainTabNavigator from "./src/screens/MainTabNavigator";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { FavoritesProvider } from "./src/context/FavoritesContext";
 import { CartProvider } from "./src/context/CartContext";
+import { OrderProvider } from "./src/context/OrderContext"; // 🆕 AGREGAR ESTA LÍNEA
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -85,31 +86,34 @@ export default function App() {
     <ThemeProvider>
       <FavoritesProvider>
         <CartProvider>
-          <NavigationContainer>
-            {currentScreen === "loading" && (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Cargando...</Text>
-              </View>
-            )}
+          <OrderProvider>
+            {" "}
+            <NavigationContainer>
+              {currentScreen === "loading" && (
+                <View style={styles.loadingContainer}>
+                  <Text style={styles.loadingText}>Cargando...</Text>
+                </View>
+              )}
 
-            {currentScreen === "login" && (
-              <LoginScreen
-                onLogin={handleLogin}
-                onNeedsProfile={handleNeedsProfile}
-              />
-            )}
+              {currentScreen === "login" && (
+                <LoginScreen
+                  onLogin={handleLogin}
+                  onNeedsProfile={handleNeedsProfile}
+                />
+              )}
 
-            {currentScreen === "complete_profile" && (
-              <CompleteProfileScreen
-                googleUserData={googleUserData}
-                onComplete={handleProfileComplete}
-              />
-            )}
+              {currentScreen === "complete_profile" && (
+                <CompleteProfileScreen
+                  googleUserData={googleUserData}
+                  onComplete={handleProfileComplete}
+                />
+              )}
 
-            {currentScreen === "main" && (
-              <MainTabNavigator user={user} onLogout={handleLogout} />
-            )}
-          </NavigationContainer>
+              {currentScreen === "main" && (
+                <MainTabNavigator user={user} onLogout={handleLogout} />
+              )}
+            </NavigationContainer>
+          </OrderProvider>{" "}
         </CartProvider>
       </FavoritesProvider>
     </ThemeProvider>

@@ -1,279 +1,254 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   TouchableOpacity,
+  FlatList,
   RefreshControl,
-  ActivityIndicator,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
-import { useFocusEffect } from "@react-navigation/native";
-import { getUserOrders, cancelOrder } from "../../services/cartService";
+import { useOrders } from "../../context/OrderContext";
 
-const OrdersScreen = ({ user }) => {
+const OrdersScreen = ({ navigation }) => {
   const { theme } = useTheme();
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { orders, getStatusText, getStatusColor } = useOrders();
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
   const styles = createStyles(theme);
 
-  // Cargar órdenes cuando la pantalla obtiene foco
-  useFocusEffect(
-    useCallback(() => {
-      if (user?.id) {
-        loadOrders();
-      }
-    }, [user?.id])
-  );
-
-  const loadOrders = async (showRefreshing = false) => {
-    if (!user?.id) return;
-
-    try {
-      if (showRefreshing) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-
-      const userOrders = await getUserOrders(user.id);
-      setOrders(userOrders || []);
-    } catch (error) {
-      console.error("Error loading orders:", error);
-      Alert.alert("Error", "No se pudieron cargar los pedidos");
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  const onRefresh = () => {
-    loadOrders(true);
-  };
-
-  const handleCancelOrder = (orderId, orderNumber) => {
-    Alert.alert(
-      "Cancelar Pedido",
-      `¿Estás seguro de que quieres cancelar el pedido #${orderNumber}?`,
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Sí, Cancelar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await cancelOrder(orderId, user.id);
-              Alert.alert("Éxito", "Pedido cancelado correctamente");
-              loadOrders();
-            } catch (error) {
-              Alert.alert("Error", "No se pudo cancelar el pedido");
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const getStatusInfo = (status) => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        return {
-          text: "Pendiente",
-          color: theme.warning,
-          icon: "time-outline",
-          canCancel: true,
-        };
-      case "confirmed":
-        return {
-          text: "Confirmado",
-          color: theme.primary,
-          icon: "checkmark-circle-outline",
-          canCancel: true,
-        };
-      case "preparing":
-        return {
-          text: "Preparando",
-          color: "#FF8C00",
-          icon: "restaurant-outline",
-          canCancel: false,
-        };
-      case "ready":
-        return {
-          text: "Listo",
-          color: theme.success,
-          icon: "bag-check-outline",
-          canCancel: false,
-        };
-      case "delivered":
-        return {
-          text: "Entregado",
-          color: theme.success,
-          icon: "checkmark-done-outline",
-          canCancel: false,
-        };
-      case "cancelled":
-        return {
-          text: "Cancelado",
-          color: theme.danger,
-          icon: "close-circle-outline",
-          canCancel: false,
-        };
-      default:
-        return {
-          text: "Desconocido",
-          color: theme.textSecondary,
-          icon: "help-circle-outline",
-          canCancel: false,
-        };
-    }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simular actualización (en una app real, aquí harías fetch de la API)
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
   const formatPrice = (price) => {
-    return `₡${parseFloat(price).toLocaleString("es-CR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    return new Intl.NumberFormat("es-CR", {
+      style: "currency",
+      currency: "CRC",
+      minimumFractionDigits: 0,
+    }).format(price);
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("es-CR", {
+      day: "2-digit",
+      month: "2-digit",
       year: "numeric",
-      month: "short",
-      day: "numeric",
+    });
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("es-CR", {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const renderOrderCard = (order) => {
-    const statusInfo = getStatusInfo(order.status);
-    const itemCount =
-      order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-
-    return (
-      <View key={order.id} style={styles.orderCard}>
-        <View style={styles.orderHeader}>
-          <View style={styles.orderInfo}>
-            <Text style={styles.orderNumber}>Pedido #{order.id}</Text>
-            <Text style={styles.orderDate}>{formatDate(order.created_at)}</Text>
-          </View>
-          <View
-            style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}
-          >
-            <Ionicons name={statusInfo.icon} size={14} color="white" />
-            <Text style={styles.statusText}>{statusInfo.text}</Text>
-          </View>
-        </View>
-
-        <View style={styles.restaurantInfo}>
-          <Ionicons name="restaurant-outline" size={16} color={theme.primary} />
-          <Text style={styles.restaurantName}>{order.restaurant_name}</Text>
-        </View>
-
-        <View style={styles.orderDetails}>
-          <Text style={styles.itemsCount}>
-            {itemCount} {itemCount === 1 ? "producto" : "productos"}
-          </Text>
-          <Text style={styles.orderTotal}>{formatPrice(order.total)}</Text>
-        </View>
-
-        {order.items && order.items.length > 0 && (
-          <View style={styles.itemsList}>
-            {order.items.slice(0, 2).map((item, index) => (
-              <Text key={index} style={styles.itemText}>
-                {item.quantity}x {item.product_name}
-              </Text>
-            ))}
-            {order.items.length > 2 && (
-              <Text style={styles.moreItemsText}>
-                y {order.items.length - 2} más...
-              </Text>
-            )}
-          </View>
-        )}
-
-        <View style={styles.orderActions}>
-          <TouchableOpacity
-            style={styles.detailsButton}
-            onPress={() => {
-              // Aquí puedes navegar a una pantalla de detalles del pedido
-              Alert.alert("Ver Detalles", "Funcionalidad próximamente");
-            }}
-          >
-            <Text style={styles.detailsButtonText}>Ver Detalles</Text>
-          </TouchableOpacity>
-
-          {statusInfo.canCancel && (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => handleCancelOrder(order.id, order.id)}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
+  const getFilteredOrders = () => {
+    if (selectedFilter === "all") return orders;
+    return orders.filter((order) => order.status === selectedFilter);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Mis Pedidos</Text>
+  const filters = [
+    { key: "all", label: "Todos", icon: "list-outline" },
+    {
+      key: "confirmed",
+      label: "Confirmados",
+      icon: "checkmark-circle-outline",
+    },
+    { key: "preparing", label: "En Preparación", icon: "time-outline" },
+    { key: "ready", label: "Listos", icon: "restaurant-outline" },
+    { key: "delivered", label: "Entregados", icon: "checkmark-done-outline" },
+  ];
+
+  const renderFilters = () => (
+    <View style={styles.filtersContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filtersScroll}
+      >
+        {filters.map((filter) => (
+          <TouchableOpacity
+            key={filter.key}
+            style={[
+              styles.filterItem,
+              selectedFilter === filter.key && styles.filterItemActive,
+            ]}
+            onPress={() => setSelectedFilter(filter.key)}
+          >
+            <Ionicons
+              name={filter.icon}
+              size={18}
+              color={
+                selectedFilter === filter.key ? theme.background : theme.primary
+              }
+            />
+            <Text
+              style={[
+                styles.filterText,
+                selectedFilter === filter.key && styles.filterTextActive,
+              ]}
+            >
+              {filter.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  const renderOrderCard = ({ item: order }) => (
+    <TouchableOpacity
+      style={styles.orderCard}
+      onPress={() => navigation.navigate("OrderDetail", { orderId: order.id })}
+      activeOpacity={0.8}
+    >
+      {/* Header del pedido */}
+      <View style={styles.orderHeader}>
+        <View style={styles.orderInfo}>
+          <Text style={styles.orderNumber}>
+            Pedido #{order.id.slice(-8).toUpperCase()}
+          </Text>
+          <Text style={styles.orderDate}>
+            {formatDate(order.orderDate)} • {formatTime(order.orderDate)}
+          </Text>
         </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={styles.loadingText}>Cargando pedidos...</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            { backgroundColor: getStatusColor(order.status, theme) + "20" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusText,
+              { color: getStatusColor(order.status, theme) },
+            ]}
+          >
+            {getStatusText(order.status)}
+          </Text>
         </View>
       </View>
-    );
-  }
+
+      {/* Restaurante */}
+      <View style={styles.restaurantSection}>
+        <Ionicons name="restaurant-outline" size={20} color={theme.primary} />
+        <Text style={styles.restaurantName}>{order.restaurant.name}</Text>
+      </View>
+
+      {/* Items del pedido */}
+      <View style={styles.itemsSection}>
+        <Text style={styles.itemsTitle}>
+          {order.items.length} producto{order.items.length !== 1 ? "s" : ""}:
+        </Text>
+        {order.items.slice(0, 2).map((item, index) => (
+          <Text key={index} style={styles.itemText}>
+            • {item.quantity}x {item.product.name}
+          </Text>
+        ))}
+        {order.items.length > 2 && (
+          <Text style={styles.moreItems}>
+            +{order.items.length - 2} producto
+            {order.items.length - 2 !== 1 ? "s" : ""} más
+          </Text>
+        )}
+      </View>
+
+      {/* Footer */}
+      <View style={styles.orderFooter}>
+        <Text style={styles.totalAmount}>{formatPrice(order.total)}</Text>
+        <View style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Ver Detalles</Text>
+          <Ionicons name="chevron-forward" size={16} color={theme.primary} />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="receipt-outline" size={80} color={theme.textSecondary} />
+      <Text style={styles.emptyTitle}>
+        {selectedFilter === "all"
+          ? "No hay pedidos"
+          : `No hay pedidos ${filters
+              .find((f) => f.key === selectedFilter)
+              ?.label.toLowerCase()}`}
+      </Text>
+      <Text style={styles.emptyText}>
+        {selectedFilter === "all"
+          ? "Cuando realices tu primer pedido aparecerá aquí"
+          : "Prueba con otro filtro o realiza un nuevo pedido"}
+      </Text>
+      {selectedFilter === "all" && (
+        <TouchableOpacity
+          style={styles.startShoppingButton}
+          onPress={() => navigation.navigate("Home")}
+        >
+          <Text style={styles.startShoppingText}>Comenzar a Comprar</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mis Pedidos</Text>
+        <Text style={styles.headerSubtitle}>
+          {orders.length} pedido{orders.length !== 1 ? "s" : ""} total
+          {orders.length !== 1 ? "es" : ""}
+        </Text>
       </View>
 
-      {orders.length === 0 ? (
-        <ScrollView
-          style={styles.scrollContainer}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name="receipt-outline"
-              size={80}
-              color={theme.textSecondary}
-            />
-            <Text style={styles.emptyTitle}>No tienes pedidos aún</Text>
-            <Text style={styles.emptySubtitle}>
-              Cuando realices tu primer pedido, aparecerá aquí
-            </Text>
-          </View>
-        </ScrollView>
-      ) : (
-        <ScrollView
-          style={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View style={styles.ordersContainer}>
-            {orders.map(renderOrderCard)}
-          </View>
-        </ScrollView>
-      )}
+      {/* Filtros */}
+      {renderFilters()}
+
+      {/* Lista de pedidos */}
+      <View style={styles.content}>
+        {getFilteredOrders().length > 0 ? (
+          <FlatList
+            data={getFilteredOrders()}
+            renderItem={renderOrderCard}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.primary]}
+                tintColor={theme.primary}
+              />
+            }
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.emptyScrollContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.primary]}
+                tintColor={theme.primary}
+              />
+            }
+          >
+            {renderEmptyState()}
+          </ScrollView>
+        )}
+      </View>
     </View>
   );
 };
