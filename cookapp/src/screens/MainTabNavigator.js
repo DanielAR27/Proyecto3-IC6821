@@ -40,6 +40,8 @@ const AdminStack = createStackNavigator();
 const ProfileStack = createStackNavigator();
 const HomeStack = createStackNavigator();
 const OrdersStack = createStackNavigator();
+// 🆕 Stack para Favorites
+const FavoritesStack = createStackNavigator();
 
 // Stack Navigator para Home (incluye RestaurantScreen)
 const HomeStackNavigator = ({ user, ...navigationProps }) => {
@@ -192,6 +194,21 @@ const OrdersStackNavigator = () => {
   );
 };
 
+// 🔧 NUEVO: FavoritesStack para manejar navegación
+const FavoritesStackNavigator = () => {
+  return (
+    <FavoritesStack.Navigator screenOptions={{ headerShown: false }}>
+      <FavoritesStack.Screen name="FavoritesMain" component={FavoritesScreen} />
+      <FavoritesStack.Screen name="Restaurant" component={RestaurantScreen} />
+      <FavoritesStack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+      />
+      <FavoritesStack.Screen name="Cart" component={CartScreen} />
+    </FavoritesStack.Navigator>
+  );
+};
+
 const MainTabNavigator = ({ user, onLogout }) => {
   return (
     <Tab.Navigator
@@ -207,7 +224,8 @@ const MainTabNavigator = ({ user, onLogout }) => {
 
       <Tab.Screen name="Orders" component={OrdersStackNavigator} />
 
-      <Tab.Screen name="Favorites" component={FavoritesScreen} />
+      {/* 🔧 Cambiar Favorites por FavoritesStackNavigator */}
+      <Tab.Screen name="Favorites" component={FavoritesStackNavigator} />
 
       {/* Tab de Admin solo para owners y admins */}
       {(user?.role === "owner" || user?.role === "admin") && (
